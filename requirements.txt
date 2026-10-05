@@ -1,0 +1,12 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+httpx==0.28.1
+pydantic==2.10.4
+pydantic-settings==2.7.1
+PyYAML==6.0.2
+PyJWT[crypto]==2.10.1
+pytest==8.3.4
+
+# Optional: real embeddings for the column-to-question shortlist (all-MiniLM-L6-v2).
+# Without it services/mapping.py falls back to a hashed token embedding.
+# sentence-transformers==3.3.1

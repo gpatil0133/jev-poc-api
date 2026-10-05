@@ -1,0 +1,24 @@
+# Import mapping: what kind of field an uploaded column is. The state is the
+# header plus a few sample values.
+
+- id: column.field_type
+  type: choice
+  description: "Field type of an imported column (Directory / Activity / Data import)."
+  instructions: "What kind of data does this spreadsheet column hold?"
+  criteria:
+    email:       "email addresses"
+    phone:       "phone or mobile numbers"
+    first_name:  "a person's first or given name"
+    last_name:   "a person's last name or surname"
+    full_name:   "a person's full name"
+    identifier:  "record, customer, employee or order ID or code"
+    date:        "dates or timestamps"
+    number:      "amounts, counts, scores or other numeric values"
+    location:    "city, state, country, address or postal code"
+    category:    "one of a small set of repeated labels, such as department or status"
+    free_text:   "sentences or comments written by a person"
+    other:       "none of the above"
+  state: ["column_name", "sample_values"]
+  model: auto
+  thresholds: {act: 0.85, suggest: 0.60}
+  rotations: 1

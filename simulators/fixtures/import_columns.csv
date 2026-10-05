@@ -1,0 +1,6 @@
+Cust ID,First Name,Surname,E-mail,Mobile,Joined On,City,Dept,Lifetime Spend,Notes,Status
+C-10021,Asha,Verma,asha.verma@example.com,+91 98200 11223,2023-04-12,Pune,Sales,18450.00,Prefers email contact after 6pm,Active
+C-10022,Daniel,Okafor,d.okafor@example.org,+44 7700 900123,2022-11-03,Leeds,Finance,920.50,Asked about the annual plan twice,Active
+C-10023,Mei,Tanaka,mei.tanaka@example.co.jp,+81 90 1234 5678,2024-01-27,Osaka,Engineering,0.00,New signup from the spring webinar,Trial
+C-10024,Lucas,Moreau,lucas.moreau@example.fr,+33 6 12 34 56 78,2021-07-19,Lyon,Support,5310.75,Complained about a late delivery in March,Churned
+C-10025,Sofia,Hernandez,sofia.h@example.mx,+52 55 1234 5678,2023-09-08,Monterrey,Sales,12999.99,Wants a callback about renewal pricing,Active

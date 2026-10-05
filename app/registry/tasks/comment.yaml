@@ -1,0 +1,69 @@
+# Comment labelling. State is the survey question plus the answer (and the metric
+# score when the caller has it), so short answers like "ok" are read in context.
+
+- id: comment.sentiment
+  type: choice
+  description: "Overall sentiment of an open-text answer."
+  instructions: "What is the sentiment of this survey answer?"
+  criteria:
+    positive: "satisfied, pleased or complimentary"
+    negative: "dissatisfied, frustrated or critical"
+    mixed:    "both positive and negative points"
+    neutral:  "factual or indifferent, no clear feeling"
+    other:    "not a real answer, or sentiment cannot be told"
+  state: ["survey_question", "answer", "metric_score"]
+  model: auto
+  thresholds: {act: 0.85, suggest: 0.60}
+  rotations: 1
+
+- id: comment.response_type
+  type: choice
+  description: "What kind of response the answer is."
+  instructions: "What kind of response is this survey answer?"
+  criteria:
+    complaint:  "reports a problem or dissatisfaction"
+    suggestion: "proposes a change or improvement"
+    praise:     "expresses satisfaction or thanks"
+    question:   "asks for information or help"
+    other:      "none of the above, or not a real answer"
+  state: ["survey_question", "answer"]
+  model: auto
+  thresholds: {act: 0.85, suggest: 0.60}
+  rotations: 1
+
+- id: comment.quality
+  type: choice
+  description: "Whether the answer is usable text (the live nudge and data cleaning read this)."
+  instructions: "How useful is this survey answer as feedback?"
+  criteria:
+    specific:  "gives a concrete reason, detail or example"
+    vague:     "a real opinion but with no detail, such as 'good' or 'bad'"
+    gibberish: "random characters, test text or nonsense"
+    no_answer: "declines to answer, such as 'nothing', 'n/a' or 'no comment'"
+    other:     "none of the above"
+  state: ["survey_question", "answer"]
+  model: auto
+  thresholds: {act: 0.85, suggest: 0.60}
+  rotations: 1
+
+- id: comment.actionable
+  type: yesno
+  description: "The answer names something the organisation could act on."
+  instructions: "Does this survey answer describe something specific the organisation could fix or change?"
+  criteria:
+    "true":  "names a specific problem, request or improvement that someone could act on"
+    "false": "general opinion, praise or no concrete issue to act on"
+  state: ["survey_question", "answer"]
+  model: auto
+  thresholds: {act: 0.85, suggest: 0.60}
+
+- id: comment.urgent
+  type: yesno
+  description: "The answer needs attention soon."
+  instructions: "Does this survey answer need urgent attention?"
+  criteria:
+    "true":  "describes an ongoing, severe or time-critical problem, or demands an immediate response"
+    "false": "no time pressure; routine feedback"
+  state: ["survey_question", "answer"]
+  model: auto
+  thresholds: {act: 0.90, suggest: 0.70}

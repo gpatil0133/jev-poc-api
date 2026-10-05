@@ -1,0 +1,46 @@
+# Meaning checks: Rules & Alerts conditions and branching triggers. Each is one
+# yes/no so several can be true for the same answer.
+
+- id: meaning.may_leave
+  type: yesno
+  description: "Respondent signals they may stop being a customer / employee."
+  instructions: "Does this survey answer say the person may leave, cancel or switch to someone else?"
+  criteria:
+    "true":  "threatens or considers leaving, cancelling, switching provider or not coming back"
+    "false": "no sign of leaving, cancelling or switching"
+  state: ["survey_question", "answer", "metric_score"]
+  model: auto
+  thresholds: {act: 0.85, suggest: 0.60}
+
+- id: meaning.safety_concern
+  type: yesno
+  description: "Answer reports a risk to someone's health or safety."
+  instructions: "Does this survey answer report a health or safety risk?"
+  criteria:
+    "true":  "describes injury, danger, harassment, a hazard or a threat to someone's wellbeing"
+    "false": "no health or safety risk is mentioned"
+  state: ["survey_question", "answer"]
+  model: auto
+  thresholds: {act: 0.90, suggest: 0.60}
+
+- id: meaning.complaint
+  type: yesno
+  description: "Answer is a complaint."
+  instructions: "Is this survey answer a complaint?"
+  criteria:
+    "true":  "reports a problem, failure or dissatisfaction with something that happened"
+    "false": "not a complaint: praise, neutral remark, suggestion or no real answer"
+  state: ["survey_question", "answer", "metric_score"]
+  model: auto
+  thresholds: {act: 0.85, suggest: 0.60}
+
+- id: meaning.callback_request
+  type: yesno
+  description: "Respondent asks to be contacted."
+  instructions: "Does this survey answer ask for someone to contact the person or follow up?"
+  criteria:
+    "true":  "asks for a call, email, reply, callback or follow-up from the organisation"
+    "false": "does not ask to be contacted"
+  state: ["survey_question", "answer"]
+  model: auto
+  thresholds: {act: 0.85, suggest: 0.60}

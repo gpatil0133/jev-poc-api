@@ -1,0 +1,54 @@
+# Stock laya-serve on the GPU box. The gateway talks to this over HTTP.
+#
+#   LAYA_API_KEY=<long random string> docker compose -f laya-compose.yaml up -d
+#   curl -s -H "Authorization: Bearer $LAYA_API_KEY" http://localhost:8000/health
+#
+# /health should list both checkpoints under "loaded" with "device": "cuda" and
+# "device_is_preference": false. If device is "cpu" the container did not get the GPU.
+#
+# Laya publishes no prebuilt image, so this installs it from PyPI at start; the
+# version is pinned to the one the gateway client was checked against. The
+# alternative is building the repo's own Dockerfile (compose.yaml + compose.cuda.yaml
+# + compose.http.yaml in NandhaKishorM/laya).
+# Needs the NVIDIA driver and the NVIDIA Container Toolkit on the host.
+services:
+  laya-serve:
+    image: python:3.12-slim
+    command: >
+      sh -c "pip install 'laya[serve]==0.3.27' && laya-serve"
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      LAYA_HOST: "0.0.0.0"
+      LAYA_PORT: "8000"
+      LAYA_DEVICE: cuda
+      LAYA_MODELS: english,multilingual
+      LAYA_PRELOAD: "1"
+      LAYA_MAX_LOADED: "2"
+      LAYA_DEFAULT_MODEL: english
+      # Required: laya-serve binds 0.0.0.0 and accepts anyone when this is unset.
+      LAYA_API_KEY: ${LAYA_API_KEY:?set LAYA_API_KEY}
+      # Requests in flight before laya-serve answers 503. Inference itself is one pass at a time.
+      LAYA_MAX_CONCURRENT: "32"
+      HF_HOME: /models
+    volumes:
+      - laya-models:/models
+      - laya-pip:/root/.cache/pip
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 300s
+
+volumes:
+  laya-models:
+  laya-pip:

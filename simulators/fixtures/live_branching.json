@@ -1,0 +1,89 @@
+{
+  "survey_no": 9001,
+  "bindings": [
+    {
+      "survey_no": 9001,
+      "question_id": "Q3",
+      "survey_question": "What is the main reason for your score?",
+      "tasks": ["comment.quality"],
+      "custom": [
+        {
+          "id": "topic",
+          "type": "choice",
+          "instructions": "What is this answer mainly about?",
+          "classes": {
+            "price": "cost, fees, value for money",
+            "delivery": "shipping time, courier, damaged on arrival",
+            "staff": "behaviour or helpfulness of employees",
+            "product": "quality, features or reliability of the product"
+          },
+          "thresholds": {"act": 0.80}
+        }
+      ]
+    },
+    {
+      "survey_no": 9001,
+      "question_id": "Q7",
+      "survey_question": "Is there anything else you would like to tell us?",
+      "tasks": ["meaning.may_leave", "meaning.callback_request"],
+      "custom": [
+        {
+          "id": "areas",
+          "type": "labels",
+          "classes": {
+            "billing": "invoices, charges, refunds",
+            "support": "help desk, response time, issue resolution",
+            "onboarding": "setup, training, getting started"
+          }
+        }
+      ]
+    }
+  ],
+  "branch_on": {"Q3": "topic", "Q7": "meaning.may_leave"},
+  "answers": {
+    "Q3": [
+      "Too expensive for what you get",
+      "The courier left the box in the rain and it was ruined",
+      "Your support agent was rude and hung up on me",
+      "It stopped working after two weeks",
+      "Great value, I tell everyone about it",
+      "ok",
+      "nothing",
+      "asdfgh",
+      "Delivery took three weeks instead of three days",
+      "The staff at the front desk were lovely",
+      "Prices keep going up every renewal",
+      "The app crashes whenever I upload a photo",
+      "No complaints really",
+      "Shipping cost more than the item",
+      "Everyone I spoke to was patient and helpful",
+      "Battery life is far worse than advertised",
+      "good",
+      "I could not find anyone to help me in store",
+      "Hidden fees at checkout",
+      "The parcel arrived early and well packed"
+    ],
+    "Q7": [
+      "Love it, but if prices go up again I'm switching",
+      "Please have someone call me about my refund",
+      "No, all good",
+      "I was charged twice this month and nobody has replied to my emails",
+      "The onboarding sessions were excellent",
+      "We are already evaluating other vendors",
+      "Could a manager get in touch with me this week?",
+      "Nothing to add",
+      "Setup took far longer than we were promised",
+      "Support never answers within the promised time",
+      "Cancel my subscription",
+      "Thanks for the quick help yesterday",
+      "I want to talk to someone about my invoice",
+      "n/a",
+      "Honestly thinking of leaving after this renewal",
+      "Training material was confusing for new joiners",
+      "Keep up the good work",
+      "Still waiting on a refund from March",
+      "Please email me the upgrade options",
+      "It is fine"
+    ]
+  }
+}
