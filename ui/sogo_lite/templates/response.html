@@ -1,0 +1,62 @@
+{% extends "project_base.html" %}
+{% block content %}
+<p><a href="/responses/{{ project.survey_no }}">← All responses</a></p>
+<section class="card">
+  <h2>Response #{{ response.id }} <small>{{ response.origin }}{% if response.offline %} · Offline Mode{% endif %} · {{ response.submitted_at or 'in progress' }}</small></h2>
+  <p>{% if project.anonymous %}<span class="pill">Anonymous project</span>{% else %}Respondent: {{ response.respondent or 'not identified' }}{% endif %}
+     {% if available %} · Automatic score: <strong>{{ '%g'|format(score) }} / {{ '%g'|format(available) }}</strong>{% endif %}
+     · <a href="/inspector?response_id={{ response.id }}">{{ calls }} gateway call(s)</a></p>
+  <table>
+    <thead><tr><th>Question</th><th>Answer</th><th>Post-Population (grader)</th></tr></thead>
+    <tbody>
+    {% for row in rows %}
+      {% set p = post.get(row.q.qid) %}
+      <tr class="{{ 'dim' if not row.shown and not row.text }}">
+        <td><code>{{ row.q.qid }}</code> {{ row.q.wording }}{% if not row.shown %} <span class="pill">not shown</span>{% endif %}</td>
+        <td>{{ row.text }}{% if pii.get(row.q.qid) %} <span class="pill warn" title="confidence {{ '%.2f'|format(pii[row.q.qid].confidence or 0) }}">personal data: {{ PII_KINDS[pii[row.q.qid].kind]|lower }}</span>{% endif %}</td>
+        <td>{% if row.q.type == 'text' and row.text %}
+          <form method="post" action="/responses/{{ project.survey_no }}/r/{{ response.id }}/post-populate" class="row tight">
+            <input type="hidden" name="qid" value="{{ row.q.qid }}">
+            <input name="score" size="3" placeholder="score" value="{{ '%g'|format(p.score) if p and p.score is not none }}">
+            <input name="feedback" placeholder="feedback" value="{{ p.feedback if p }}">
+            <button class="ghost">Save</button>
+            {% if p %}<span class="pill {{ 'ok' if p.status == 'confirmed' else 'band-suggest' }}">{{ p.status }} · {{ p.source }}</span>{% endif %}
+          </form>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% if post %}<p class="muted">Post-populated scores are shown next to the automatic score and are not added into it.</p>{% endif %}
+</section>
+
+{% if notes %}
+<section class="card">
+  <h2>Skipped checks</h2>
+  <ul>{% for n in notes %}<li><span class="pill band-suggest">{{ n.kind }}</span> {{ n.what }}: {{ n.reason }}</li>{% endfor %}</ul>
+</section>
+{% endif %}
+
+{% if classifications %}
+<section class="card">
+  <h2>Stored classifications <small>classified once; every rule reads this</small></h2>
+  {% for c in classifications %}
+  <h3><code>{{ c.qid }}</code> <small>question hash {{ c.question_hash }} · {{ c.created_at }}{% if c.log_id %} · <a href="/inspector/{{ c.log_id }}">call #{{ c.log_id }}</a>{% endif %}</small></h3>
+  <table>
+    <thead><tr><th>Answer</th><th>Label</th><th>Confidence</th><th>Band</th><th>Probabilities</th></tr></thead>
+    <tbody>{% for id, a in c.answers.items() %}
+      <tr><td><code>{{ id }}</code></td><td>{{ a.label }}</td><td>{{ '%.2f'|format(a.confidence or 0) }}</td>
+          <td><span class="pill band-{{ a.band }}">{{ a.band }}</span>{% if a._forced %} <span class="pill warn">forced</span>{% endif %}</td>
+          <td class="muted">{% for k, v in a.probabilities.items() %}{{ k }} {{ '%.2f'|format(v) }}{{ ' · ' if not loop.last }}{% endfor %}</td></tr>
+    {% endfor %}</tbody>
+  </table>
+  {% endfor %}
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Alerts written for this response</h2>
+  {% for s in sinks %}
+  <details><summary><span class="pill">{{ s.sink }}</span> {{ s.rule }} <span class="muted">{{ s.created_at }}</span></summary><pre>{{ s.payload|pretty }}</pre></details>
+  {% else %}<p class="muted">None.</p>{% endfor %}
+</section>
+{% endblock %}

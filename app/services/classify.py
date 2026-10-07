@@ -137,6 +137,11 @@ def _truncated(result: dict) -> bool:
     return bool((result.get("usage") or {}).get("truncated"))
 
 
+def _token_usage(result: dict) -> dict[str, int]:
+    return {k: v for k, v in (result.get("usage") or {}).items()
+            if k.endswith("_tokens") and isinstance(v, int)}
+
+
 class ClassifyService:
     def __init__(self, backend: DecisionBackend, registry: TaskRegistry, bindings: BindingStore,
                  settings: Settings, decision_log: DecisionLog):
@@ -148,6 +153,10 @@ class ClassifyService:
         self.cache = ResultCache(settings.cache_max_entries)
         self._live_inflight = 0
         self._log_tasks: set[asyncio.Task] = set()
+
+    def _model_key(self, cset: CompiledSet) -> str:
+        """Cache namespace: an answer from one backend is never served as another's."""
+        return f"{getattr(self.backend, 'name', 'laya')}:{cset.model}"
 
     def _log_later(self, records: list[dict]) -> None:
         """Write the decision log off the response path."""
@@ -197,12 +206,13 @@ class ClassifyService:
         model: Optional[str] = None
         truncated = False
         backend_ms: Optional[float] = None
+        usage: dict[str, int] = {}
 
         if not text.strip():
             fallback_reason = "empty_text"
         else:
             for q in cset.questions:
-                hit = self.cache.get((shash, cset.model, q.qhash))
+                hit = self.cache.get((shash, self._model_key(cset), q.qhash))
                 if hit is not None:
                     raws[q.qid] = hit
                     cached.add(q.qid)
@@ -227,12 +237,13 @@ class ClassifyService:
                     model = _routed_model(result) or model
                     truncated = _truncated(result)
                     backend_ms = result.get("_inference_ms")
+                    usage = _token_usage(result)
                     for q in cset.questions:
                         if q.qid in missing:
                             raw = decode(q, result.get("answers") or {})
                             if raw is not None:
                                 raw["model"] = model
-                                self.cache.put((shash, cset.model, q.qhash), raw)
+                                self.cache.put((shash, self._model_key(cset), q.qhash), raw)
                             raws[q.qid] = raw
                 except asyncio.TimeoutError:
                     fallback_reason = "timeout"
@@ -251,7 +262,7 @@ class ClassifyService:
         response = ClassifyResponse(
             answers=answers, fallback=fallback_reason is not None, fallback_reason=fallback_reason,
             latency_ms=latency_ms, backend_ms=backend_ms, model=model, truncated=truncated,
-            question_hash=cset.set_hash,
+            question_hash=cset.set_hash, usage=usage,
         )
         self._log_later([self.decision_log.record(
             "classify", tenant_id, shash, cset.set_hash, answers, text=text, model=model,
@@ -291,7 +302,7 @@ class ClassifyService:
                 if not entries[i][2].strip():
                     continue
                 for q in cset.questions:
-                    hit = self.cache.get((hashes[i], cset.model, q.qhash))
+                    hit = self.cache.get((hashes[i], self._model_key(cset), q.qhash))
                     if hit is not None:
                         raws[i][q.qid] = hit
                         cached[i].add(q.qid)
@@ -318,7 +329,7 @@ class ClassifyService:
                             raw = decode(q, result.get("answers") or {})
                             if raw is not None:
                                 raw["model"] = model
-                                self.cache.put((shash, cset.model, q.qhash), raw)
+                                self.cache.put((shash, self._model_key(cset), q.qhash), raw)
                             decoded[q.qid] = raw
                     for i in owners:
                         # A partly cached item keeps its cached answers.

@@ -1,0 +1,346 @@
+{
+  "rows": {
+    "comments": 64,
+    "fix_tracker_followups": 28,
+    "survey_questions": 28,
+    "activity_notes": 24,
+    "free_text_profile": 33,
+    "ex_comments": 24,
+    "invitation_replies": 25
+  },
+  "labels": {
+    "vq_loyalty_app": {
+      "yes_negative": 9,
+      "yes_positive": 6,
+      "not_mentioned": 49
+    },
+    "coach_blind_spot": {
+      "none_of_these": 29,
+      "staff": 9,
+      "delivery": 10,
+      "billing": 9,
+      "product": 7
+    },
+    "owner_team": {
+      "digital": 15,
+      "facilities": 11,
+      "delivery": 10,
+      "billing": 9,
+      "store_staff": 8,
+      "product": 7,
+      "none": 4
+    },
+    "callback_offer": {
+      "unresolved": 14,
+      "not_unresolved": 50
+    },
+    "fix_issue": {
+      "app_login": 4,
+      "none": 47,
+      "late_delivery": 4,
+      "damaged_item": 3,
+      "billing_error": 6
+    },
+    "fix_status": {
+      "still_happening": 8,
+      "fixed": 12,
+      "worse": 4,
+      "not_mentioned": 4
+    },
+    "coach_wording": {
+      "leading": 3,
+      "double_barrelled": 3,
+      "overlapping_options": 3,
+      "fine": 10,
+      "vague_time_frame": 3,
+      "jargon": 3,
+      "sensitive": 3
+    },
+    "question_type": {
+      "rating": 7,
+      "yes_no": 7,
+      "multiple_choice": 8,
+      "nps": 1,
+      "open_text": 3,
+      "matrix": 2
+    },
+    "invitation_hold": {
+      "send": 8,
+      "hold": 10,
+      "dont_send": 6
+    },
+    "seniority": {
+      "senior_management": 2,
+      "director": 2,
+      "cant_tell": 3,
+      "individual_contributor": 4,
+      "executive": 4,
+      "manager": 3
+    },
+    "industry": {
+      "healthcare": 2,
+      "education": 2,
+      "financial_services": 3,
+      "technology": 1,
+      "manufacturing": 1,
+      "hospitality": 2,
+      "public_sector": 1,
+      "retail": 1,
+      "cant_tell": 2
+    },
+    "identity_warning": {
+      "identifies_writer": 8,
+      "names_someone_else": 8,
+      "safe": 8
+    },
+    "invitation_reply": {
+      "unsubscribe": 6,
+      "wrong_person": 5,
+      "out_of_office": 5,
+      "feedback": 5,
+      "question": 4
+    }
+  },
+  "difficulty": {
+    "vq_loyalty_app": {
+      "easy": 38,
+      "tricky": 14,
+      "paraphrase": 12
+    },
+    "coach_blind_spot": {
+      "easy": 38,
+      "tricky": 14,
+      "paraphrase": 12
+    },
+    "owner_team": {
+      "easy": 38,
+      "tricky": 14,
+      "paraphrase": 12
+    },
+    "callback_offer": {
+      "easy": 38,
+      "tricky": 14,
+      "paraphrase": 12
+    },
+    "fix_issue": {
+      "easy": 38,
+      "tricky": 14,
+      "paraphrase": 12
+    },
+    "fix_status": {
+      "easy": 17,
+      "paraphrase": 8,
+      "tricky": 3
+    },
+    "coach_wording": {
+      "easy": 22,
+      "tricky": 3,
+      "paraphrase": 3
+    },
+    "question_type": {
+      "easy": 22,
+      "tricky": 3,
+      "paraphrase": 3
+    },
+    "invitation_hold": {
+      "easy": 15,
+      "tricky": 3,
+      "paraphrase": 6
+    },
+    "seniority": {
+      "paraphrase": 5,
+      "easy": 11,
+      "tricky": 2
+    },
+    "industry": {
+      "tricky": 3,
+      "easy": 8,
+      "paraphrase": 4
+    },
+    "identity_warning": {
+      "easy": 13,
+      "paraphrase": 8,
+      "tricky": 3
+    },
+    "invitation_reply": {
+      "easy": 16,
+      "paraphrase": 7,
+      "tricky": 2
+    }
+  },
+  "planted": {
+    "blind_spots": {
+      "comments": 64,
+      "fit_no_question": 29,
+      "topics": {
+        "loyalty_app": {
+          "comments": 14,
+          "share_of_all": 0.219
+        },
+        "parking": {
+          "comments": 11,
+          "share_of_all": 0.172
+        },
+        "no_content": {
+          "comments": 4,
+          "share_of_all": 0.062
+        }
+      }
+    },
+    "loyalty_app": {
+      "yes_negative": {
+        "comments": 9,
+        "share_of_all": 0.141
+      },
+      "yes_positive": {
+        "comments": 6,
+        "share_of_all": 0.094
+      },
+      "not_mentioned": {
+        "comments": 49,
+        "share_of_all": 0.766
+      }
+    },
+    "team_inbox": {
+      "digital": {
+        "comments": 15,
+        "detractor_comments": 8
+      },
+      "facilities": {
+        "comments": 11,
+        "detractor_comments": 9
+      },
+      "delivery": {
+        "comments": 10,
+        "detractor_comments": 8
+      },
+      "billing": {
+        "comments": 9,
+        "detractor_comments": 6
+      },
+      "store_staff": {
+        "comments": 8,
+        "detractor_comments": 4
+      },
+      "product": {
+        "comments": 7,
+        "detractor_comments": 4
+      },
+      "none": {
+        "comments": 4,
+        "detractor_comments": 1
+      }
+    },
+    "callback_offers": {
+      "unresolved": 14,
+      "nps_0_to_6": 40,
+      "unresolved_with_nps_7_plus": 0
+    },
+    "fix_tracker": {
+      "late_delivery": {
+        "followups": 8,
+        "status": {
+          "fixed": 3,
+          "still_happening": 3,
+          "worse": 1,
+          "not_mentioned": 1
+        },
+        "fixed_share": 0.375,
+        "by_branch": {
+          "Downtown": {
+            "followups": 1,
+            "fixed_share": 1.0
+          },
+          "Online": {
+            "followups": 6,
+            "fixed_share": 0.333
+          },
+          "Riverside": {
+            "followups": 1,
+            "fixed_share": 0.0
+          }
+        }
+      },
+      "billing_error": {
+        "followups": 10,
+        "status": {
+          "still_happening": 3,
+          "fixed": 5,
+          "worse": 1,
+          "not_mentioned": 1
+        },
+        "fixed_share": 0.5,
+        "by_branch": {
+          "Downtown": {
+            "followups": 1,
+            "fixed_share": 1.0
+          },
+          "Northgate": {
+            "followups": 5,
+            "fixed_share": 0.2
+          },
+          "Online": {
+            "followups": 3,
+            "fixed_share": 0.667
+          },
+          "Riverside": {
+            "followups": 1,
+            "fixed_share": 1.0
+          }
+        }
+      },
+      "damaged_item": {
+        "followups": 5,
+        "status": {
+          "fixed": 2,
+          "still_happening": 1,
+          "worse": 1,
+          "not_mentioned": 1
+        },
+        "fixed_share": 0.4,
+        "by_branch": {
+          "Downtown": {
+            "followups": 1,
+            "fixed_share": 0.0
+          },
+          "Northgate": {
+            "followups": 1,
+            "fixed_share": 1.0
+          },
+          "Online": {
+            "followups": 2,
+            "fixed_share": 0.0
+          },
+          "Riverside": {
+            "followups": 1,
+            "fixed_share": 1.0
+          }
+        }
+      },
+      "app_login": {
+        "followups": 5,
+        "status": {
+          "fixed": 2,
+          "still_happening": 1,
+          "worse": 1,
+          "not_mentioned": 1
+        },
+        "fixed_share": 0.4,
+        "by_branch": {
+          "Downtown": {
+            "followups": 1,
+            "fixed_share": 1.0
+          },
+          "Online": {
+            "followups": 3,
+            "fixed_share": 0.333
+          },
+          "Riverside": {
+            "followups": 1,
+            "fixed_share": 0.0
+          }
+        }
+      }
+    }
+  }
+}

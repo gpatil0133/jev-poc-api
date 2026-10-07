@@ -120,6 +120,9 @@ class ClassifyResponse(BaseModel):
     model: Optional[str] = None
     truncated: bool = False
     question_hash: str
+    # Token counts the backend reported for this call (Jev bills on input tokens).
+    # Empty when every answer came from the cache or the backend reports none.
+    usage: dict[str, int] = Field(default_factory=dict)
 
 
 class BatchItem(TextItem):

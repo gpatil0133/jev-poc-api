@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{{ project.name }}{% endblock %}
+{% block subnav %}
+<div class="project-head">
+  <h1>{{ project.name }} <small>#{{ project.survey_no }} · {{ project.type }}{% if project.anonymous %} · Anonymous{% endif %}</small></h1>
+  <nav class="tabs">
+    <a class="{{ 'on' if tab == 'questions' }}" href="/design/{{ project.survey_no }}">Design</a>
+    <a class="{{ 'on' if tab == 'logic' }}" href="/design/{{ project.survey_no }}/logic">Logic</a>
+    <a class="{{ 'on' if tab == 'tags' }}" href="/design/{{ project.survey_no }}/tags">Tags</a>
+    <a class="{{ 'on' if tab == 'scores' }}" href="/design/{{ project.survey_no }}/scores">Assign Scores</a>
+    <a class="{{ 'on' if tab == 'alerts' }}" href="/design/{{ project.survey_no }}/alerts">Rules &amp; Alerts</a>
+    <a class="{{ 'on' if tab == 'take' }}" href="/take/{{ project.survey_no }}">Participate</a>
+    <a class="{{ 'on' if tab == 'responses' }}" href="/responses/{{ project.survey_no }}">Responses</a>
+  </nav>
+</div>
+{% if unsynced %}
+<form class="banner warn" method="post" action="/design/{{ project.survey_no }}/sync-classes">
+  {{ unsynced }} class set(s) in this project are local drafts the gateway has not accepted yet, so rules cannot read them.
+  <button>Save to the gateway</button>
+</form>
+{% endif %}
+{% endblock %}

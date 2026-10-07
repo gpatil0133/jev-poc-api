@@ -1,0 +1,25 @@
+﻿row_id,text,expected_label,difficulty
+EX001,"As the only night-shift supervisor at the Riverside warehouse, I never get a proper break.",identifies_writer,easy
+EX002,I am the one who raised the forklift incident last month and nothing has changed.,identifies_writer,paraphrase
+EX003,"Being the sole wheelchair user in the Downtown store, the staff room is impossible for me.",identifies_writer,easy
+EX004,I joined the design desk at Northgate three weeks ago and have had no training.,identifies_writer,paraphrase
+EX005,Since I came back from maternity leave in June my hours in visual merchandising were cut.,identifies_writer,paraphrase
+EX006,"As the longest-serving member of the returns team, twenty-two years, I think we deserve better.",identifies_writer,easy
+EX007,I am the only French speaker in customer care so every French call lands on me.,identifies_writer,easy
+EX008,After my transfer from Leeds to the Downtown finance team I feel left out.,identifies_writer,paraphrase
+EX009,Darren in dispatch shouts at the temps and nobody stops him.,names_someone_else,easy
+EX010,The Northgate store manager plays favourites with the rota.,names_someone_else,paraphrase
+EX011,"Priya Shah deserves a promotion, she carries the whole team.",names_someone_else,easy
+EX012,"My line manager, the head of visual merchandising, takes credit for our work.",names_someone_else,tricky
+EX013,The new HR business partner for Riverside ignores every email.,names_someone_else,paraphrase
+EX014,"Tom from IT fixed my laptop in ten minutes, give him a raise.",names_someone_else,easy
+EX015,Our regional director made a sexist joke at the town hall.,names_someone_else,paraphrase
+EX016,The Saturday shift lead on tills at Downtown lets her friends leave early.,names_someone_else,paraphrase
+EX017,We need more staff on weekends.,safe,easy
+EX018,Pay has not kept up with the cost of living.,safe,easy
+EX019,The break room microwave has been broken for ages.,safe,easy
+EX020,Managers should communicate rota changes earlier.,safe,easy
+EX021,"I enjoy working here, the team is supportive.",safe,easy
+EX022,Training on the new till system was rushed.,safe,easy
+EX023,Some supervisors could listen more.,safe,tricky
+EX024,More flexible hours would help those of us with kids.,safe,tricky

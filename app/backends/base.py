@@ -14,6 +14,8 @@ class BackendError(Exception):
 
 
 class DecisionBackend(Protocol):
+    # "laya" | "jev" | "fake". Part of the cache key, so answers never cross backends.
+    name: str
     # Upstream cap on states per batch call; callers chunk to this.
     max_batch_states: int
 

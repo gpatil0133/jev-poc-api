@@ -98,9 +98,10 @@ def flatten_answers(answers: dict[str, dict[str, Any]]) -> dict[str, Any]:
     return flat
 
 
-def write_csv(name: str, rows: list[dict[str, Any]]) -> Path:
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    path = OUT_DIR / name
+def write_csv(name: str, rows: list[dict[str, Any]], out_dir: Optional[Path] = None) -> Path:
+    out_dir = out_dir or OUT_DIR
+    out_dir.mkdir(parents=True, exist_ok=True)
+    path = out_dir / name
     fields: list[str] = []
     for row in rows:
         for key in row:

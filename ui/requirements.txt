@@ -1,0 +1,8 @@
+# Sogo-lite mock platform (docs/sogo-lite-mock-platform-plan.md).
+# fastapi, uvicorn and httpx are the gateway's own pins; the mock adds the three below.
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+httpx==0.28.1
+Jinja2==3.1.4
+python-multipart==0.0.20
+python-dotenv==1.2.4

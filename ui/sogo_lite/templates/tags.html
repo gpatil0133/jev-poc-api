@@ -1,0 +1,69 @@
+{% extends "project_base.html" %}
+{% block content %}
+{% macro chips(tags, target_type, target_id) %}
+  {% for t in tags %}<form method="post" action="/design/{{ project.survey_no }}/tags/unassign" class="chip" title="{{ t.source }}">
+    <input type="hidden" name="target_type" value="{{ target_type }}"><input type="hidden" name="target_id" value="{{ target_id }}"><input type="hidden" name="tag_id" value="{{ t.id }}">
+    {{ t.name }}{% if t.source != 'manual' %} <em>{{ t.source }}</em>{% endif %} <button class="link" title="Remove tag">×</button></form>{% endfor %}
+{% endmacro %}
+<section class="card">
+  <h2>Tags in this project</h2>
+  <div class="row">
+    <form method="post" action="/design/{{ project.survey_no }}/tags/automap"><button class="ghost">Auto-map exact names</button></form>
+    {% if module_on('tag_suggest') %}<form method="post" action="/design/{{ project.survey_no }}/tags/suggest"><button>Suggest tags</button></form>
+    <span class="muted">scope 6: runs auto-map first, then asks the gateway about what is still untagged. Only wording is sent.</span>{% endif %}
+  </div>
+  <table>
+    <thead><tr><th>Item</th><th>Tags</th></tr></thead>
+    <tbody>
+    {% for q in questions %}
+      <tr><td><code>{{ q.qid }}</code> {{ q.wording }}</td><td>{{ chips(question_tags.get(q.id, []), 'question', q.id) }}</td></tr>
+      {% for o in q.options %}<tr><td class="indent">{{ o.text }}</td><td>{{ chips(option_tags.get(o.id, []), 'option', o.id) }}</td></tr>{% endfor %}
+    {% endfor %}
+    </tbody>
+  </table>
+  <form method="post" action="/design/{{ project.survey_no }}/tags/assign" class="row">
+    <label>Tag by hand <select name="target">
+      {% for q in questions %}<option value="question:{{ q.id }}">{{ q.qid }}: {{ q.wording }}</option>
+      {% for o in q.options %}<option value="option:{{ o.id }}">&nbsp;&nbsp;↳ {{ o.text }}</option>{% endfor %}{% endfor %}
+    </select></label>
+    <label>with <select name="tag_id">{% for c in categories %}<optgroup label="{{ c.name }}">{% for t in c.tags %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}</optgroup>{% endfor %}</select></label>
+    <button class="ghost">Apply</button>
+  </form>
+</section>
+
+{% if module_on('tag_suggest') %}
+<section class="card" id="review">
+  <h2>Suggested tags <small>nothing is applied until you click Accept</small></h2>
+  {% if review %}
+  <form method="post" action="/design/{{ project.survey_no }}/tags/review">
+    <table>
+      <thead><tr><th></th><th>Item</th><th>Suggested tag</th><th>Confidence</th><th>Band</th><th>Tag list sent</th></tr></thead>
+      <tbody>{% for s in review %}
+        <tr><td><input type="checkbox" name="accept" value="{{ s.id }}" {{ 'checked' if s.band == 'act' }}></td>
+            <td>{{ s.target_text }} <span class="muted">{{ 'answer option' if s.target_type == 'option' else 'question' }}{% if s.target_context %} of "{{ s.target_context }}"{% endif %}</span></td>
+            <td><strong>{{ s.proposed.tag }}</strong> <span class="muted">{{ s.proposed.category }}</span></td>
+            <td>{{ '%.2f'|format(s.confidence or 0) }}</td><td><span class="pill band-{{ s.band }}">{{ s.band }}</span></td>
+            <td>{{ s.detail.path }} ({{ s.detail.candidates }} tags)</td></tr>
+      {% endfor %}</tbody>
+    </table>
+    <div class="row"><button name="action" value="accept">Accept selected</button><button name="action" value="dismiss" class="ghost">Dismiss all</button></div>
+    <p class="muted"><code>act</code> suggestions are pre-selected. <code>suggest</code> ones are listed but not selected.</p>
+  </form>
+  {% else %}<p class="muted">No suggestions to review. Click "Suggest tags".</p>{% endif %}
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Tag categories <small>account-wide · up to {{ max_categories }} categories, {{ max_tags }} tags each</small></h2>
+  {% for c in categories %}
+  <details>
+    <summary>{{ c.name }} <span class="muted">{{ c.tags|length }} tag{{ 's' if c.tags|length != 1 }}</span></summary>
+    <p class="tags">{% for t in c.tags[:60] %}<span class="chip">{{ t.name }}</span>{% endfor %}{% if c.tags|length > 60 %} <span class="muted">and {{ c.tags|length - 60 }} more</span>{% endif %}</p>
+    <form method="post" action="/design/{{ project.survey_no }}/tags/categories/{{ c.id }}" class="row">
+      <label class="grow">Add tags, one per line or comma-separated <textarea name="names" rows="2"></textarea></label><button class="ghost">Add</button>
+    </form>
+  </details>
+  {% endfor %}
+  <form method="post" action="/design/{{ project.survey_no }}/tags/categories" class="row"><label>New category <input name="name" required></label><button class="ghost">Add category</button></form>
+</section>
+{% endblock %}

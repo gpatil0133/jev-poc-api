@@ -1,0 +1,150 @@
+{"id": "tags-001", "text": "Downtown Grand Hotel", "tier": "easy", "category": "hotel_location", "expected": "Downtown"}
+{"id": "tags-002", "text": "Airport Inn & Suites", "tier": "easy", "category": "hotel_location", "expected": "Airport"}
+{"id": "tags-003", "text": "Beachfront Resort & Spa", "tier": "easy", "category": "hotel_location", "expected": "Beachfront"}
+{"id": "tags-004", "text": "City Centre Suites", "tier": "medium", "category": "hotel_location", "expected": "Downtown"}
+{"id": "tags-005", "text": "Terminal 2 Skyway Hotel", "tier": "medium", "category": "hotel_location", "expected": "Airport"}
+{"id": "tags-006", "text": "Seashore Villas", "tier": "medium", "category": "hotel_location", "expected": "Beachfront"}
+{"id": "tags-007", "text": "The Embankment Hotel, overlooking the weir", "tier": "hard", "category": "hotel_location", "expected": "Riverside", "note": "An embankment and a weir imply a river without naming it; nothing suggests sea, city centre or airport."}
+{"id": "tags-008", "text": "Old Town Square Boutique Hotel", "tier": "hard", "category": "hotel_location", "expected": "Downtown", "note": "A town square in the old town is the city centre, implied rather than stated."}
+{"id": "tags-009", "text": "Mountain Lodge & Ski Chalet", "tier": "hard", "category": "hotel_location", "expected": "other", "note": "A real hotel option but a mountain location matches none of the four tags."}
+{"id": "tags-010", "text": "I didn't stay overnight", "tier": "hard", "category": "hotel_location", "expected": "other", "note": "An opt-out option, not a hotel, so no location applies."}
+{"id": "tags-011", "text": "Midwest Outlet Mall", "tier": "easy", "category": "store_region", "expected": "Midwest"}
+{"id": "tags-012", "text": "Online store / website", "tier": "easy", "category": "store_region", "expected": "Online Store"}
+{"id": "tags-013", "text": "Canada - Toronto flagship", "tier": "easy", "category": "store_region", "expected": "Canada"}
+{"id": "tags-014", "text": "Boston - Harbor Street", "tier": "medium", "category": "store_region", "expected": "Northeast"}
+{"id": "tags-015", "text": "Phoenix, Arizona", "tier": "medium", "category": "store_region", "expected": "Southwest"}
+{"id": "tags-016", "text": "Miami Gardens branch", "tier": "medium", "category": "store_region", "expected": "Southeast"}
+{"id": "tags-017", "text": "Denver - Mile High Plaza", "tier": "hard", "category": "store_region", "expected": "Mountain West", "note": "Denver is in the Rocky Mountain states, not the Midwest or the Southwest."}
+{"id": "tags-018", "text": "Vancouver, BC - Granville", "tier": "hard", "category": "store_region", "expected": "Canada", "note": "Vancouver is on the Pacific coast but BC puts it in Canada, not the US West Coast region."}
+{"id": "tags-019", "text": "Portland, Maine", "tier": "hard", "category": "store_region", "expected": "Northeast", "note": "The state makes it the New England Portland, not the West Coast one in Oregon."}
+{"id": "tags-020", "text": "London, UK pop-up shop", "tier": "hard", "category": "store_region", "expected": "other", "note": "A physical store outside every listed region."}
+{"id": "tags-021", "text": "I don't remember which store", "tier": "hard", "category": "store_region", "expected": "other", "note": "A can't-recall option carries no region."}
+{"id": "tags-022", "text": "Menswear", "tier": "easy", "category": "product_department", "expected": "Menswear"}
+{"id": "tags-023", "text": "Toys and games", "tier": "easy", "category": "product_department", "expected": "Toys"}
+{"id": "tags-024", "text": "Garden centre", "tier": "easy", "category": "product_department", "expected": "Garden"}
+{"id": "tags-025", "text": "Electronics & gadgets", "tier": "easy", "category": "product_department", "expected": "Electronics"}
+{"id": "tags-026", "text": "Ladies' fashion", "tier": "medium", "category": "product_department", "expected": "Womenswear"}
+{"id": "tags-027", "text": "Pots, pans and utensils", "tier": "medium", "category": "product_department", "expected": "Kitchenware"}
+{"id": "tags-028", "text": "Make-up and fragrance counter", "tier": "medium", "category": "product_department", "expected": "Beauty"}
+{"id": "tags-029", "text": "Trainers and boots", "tier": "medium", "category": "product_department", "expected": "Footwear"}
+{"id": "tags-030", "text": "Baby grows and school uniforms", "tier": "hard", "category": "product_department", "expected": "Childrenswear", "note": "Clothing for babies and school-age children; child-related but not Toys."}
+{"id": "tags-031", "text": "Camping tents and sleeping bags", "tier": "hard", "category": "product_department", "expected": "Sports & Outdoors", "note": "Outdoor leisure gear, not Garden even though both are used outside."}
+{"id": "tags-032", "text": "Customer cafe", "tier": "hard", "category": "product_department", "expected": "other", "note": "A place in the store that is none of the listed departments."}
+{"id": "tags-033", "text": "Just browsing, bought nothing", "tier": "hard", "category": "product_department", "expected": "other", "note": "An opt-out option naming no department."}
+{"id": "tags-034", "text": "15-inch laptop", "tier": "easy", "category": "product_type", "expected": "Laptop"}
+{"id": "tags-035", "text": "Wireless headphones", "tier": "easy", "category": "product_type", "expected": "Headphones"}
+{"id": "tags-036", "text": "Inkjet printer", "tier": "easy", "category": "product_type", "expected": "Printer"}
+{"id": "tags-037", "text": "Oak dining table", "tier": "easy", "category": "product_type", "expected": "Dining Table"}
+{"id": "tags-038", "text": "Wool rug, 160 x 230 cm", "tier": "easy", "category": "product_type", "expected": "Rug"}
+{"id": "tags-039", "text": "55-inch 4K smart TV", "tier": "medium", "category": "product_type", "expected": "Television"}
+{"id": "tags-040", "text": "5G handset, 128GB", "tier": "medium", "category": "product_type", "expected": "Smartphone"}
+{"id": "tags-041", "text": "Wi-Fi 6 mesh hub", "tier": "medium", "category": "product_type", "expected": "Router"}
+{"id": "tags-042", "text": "Three-seater settee", "tier": "medium", "category": "product_type", "expected": "Sofa"}
+{"id": "tags-043", "text": "Mirrorless body with 50mm lens", "tier": "medium", "category": "product_type", "expected": "Camera"}
+{"id": "tags-044", "text": "27-inch curved display, 144Hz, DisplayPort", "tier": "hard", "category": "product_type", "expected": "Monitor", "note": "Size, refresh rate and DisplayPort mark a computer monitor, not a Television."}
+{"id": "tags-045", "text": "Tower PC with graphics card", "tier": "hard", "category": "product_type", "expected": "Desktop Computer", "note": "A tower is a desktop machine, not a Laptop, and the tag word never appears."}
+{"id": "tags-046", "text": "Noise-cancelling earbuds", "tier": "hard", "category": "product_type", "expected": "Headphones", "note": "Earbuds are worn in the ear so Headphones is the nearest tag, not Speaker."}
+{"id": "tags-047", "text": "King size memory foam, medium firm", "tier": "hard", "category": "product_type", "expected": "Mattress", "note": "King size suggests Bed, but memory foam and firmness describe a mattress."}
+{"id": "tags-048", "text": "Kettle and toaster set", "tier": "hard", "category": "product_type", "expected": "other", "note": "Small kitchen appliances are outside this electronics and furniture tag list."}
+{"id": "tags-049", "text": "Gift voucher", "tier": "hard", "category": "product_type", "expected": "other", "note": "A purchase that is not a product type in the list."}
+{"id": "tags-050", "text": "Nothing yet, still deciding", "tier": "hard", "category": "product_type", "expected": "other", "note": "An opt-out option naming no product."}
+{"id": "tags-051", "text": "Leather sofa, chestnut", "tier": "easy", "category": "furniture_products", "expected": "Leather Sofa"}
+{"id": "tags-052", "text": "Bunk bed with ladder", "tier": "easy", "category": "furniture_products", "expected": "Bunk Bed"}
+{"id": "tags-053", "text": "Glass coffee table", "tier": "easy", "category": "furniture_products", "expected": "Coffee Table"}
+{"id": "tags-054", "text": "Standing desk, electric", "tier": "easy", "category": "furniture_products", "expected": "Standing Desk"}
+{"id": "tags-055", "text": "Bar stool (set of 2)", "tier": "easy", "category": "furniture_products", "expected": "Bar Stool"}
+{"id": "tags-056", "text": "Mattress topper, 5cm", "tier": "easy", "category": "furniture_products", "expected": "Mattress Topper"}
+{"id": "tags-057", "text": "Folding sun lounger", "tier": "easy", "category": "furniture_products", "expected": "Sun Lounger"}
+{"id": "tags-058", "text": "Pull-out guest settee that sleeps two", "tier": "medium", "category": "furniture_products", "expected": "Sofa Bed"}
+{"id": "tags-059", "text": "L-shaped sectional", "tier": "medium", "category": "furniture_products", "expected": "Corner Sofa"}
+{"id": "tags-060", "text": "Nightstand with two drawers", "tier": "medium", "category": "furniture_products", "expected": "Bedside Table"}
+{"id": "tags-061", "text": "Pouffe", "tier": "medium", "category": "furniture_products", "expected": "Footstool"}
+{"id": "tags-062", "text": "Patio umbrella, 3m", "tier": "medium", "category": "furniture_products", "expected": "Parasol"}
+{"id": "tags-063", "text": "Vanity unit with stool", "tier": "medium", "category": "furniture_products", "expected": "Dressing Table"}
+{"id": "tags-064", "text": "Baby's crib", "tier": "medium", "category": "furniture_products", "expected": "Cot"}
+{"id": "tags-065", "text": "3-seater in tan hide", "tier": "hard", "category": "furniture_products", "expected": "Leather Sofa", "note": "Hide means leather, so Leather Sofa not Fabric Sofa; three seats rules out Loveseat."}
+{"id": "tags-066", "text": "Individually wrapped coil mattress, medium firm", "tier": "hard", "category": "furniture_products", "expected": "Pocket Sprung Mattress", "note": "Individually wrapped coils are pocket springs, not Memory Foam Mattress."}
+{"id": "tags-067", "text": "Lift-up storage bed frame, gas struts", "tier": "hard", "category": "furniture_products", "expected": "Ottoman Bed", "note": "A lift-up storage base is what defines an ottoman bed; no size is given so the size-based bed tags do not apply."}
+{"id": "tags-068", "text": "Wardrobe with gliding mirrored doors", "tier": "hard", "category": "furniture_products", "expected": "Sliding Door Wardrobe", "note": "Gliding doors make it the more specific Sliding Door Wardrobe, not plain Wardrobe or a mirror."}
+{"id": "tags-069", "text": "Dining table with butterfly leaf, seats 6-10", "tier": "hard", "category": "furniture_products", "expected": "Extending Dining Table", "note": "A butterfly leaf and a seating range mean it extends, so not plain Dining Table."}
+{"id": "tags-070", "text": "Teak bench for the patio", "tier": "hard", "category": "furniture_products", "expected": "Garden Bench", "note": "Outdoor use makes it Garden Bench rather than the indoor Bench."}
+{"id": "tags-071", "text": "Tall freestanding dressing mirror", "tier": "hard", "category": "furniture_products", "expected": "Floor Mirror", "note": "Freestanding rules out Wall Mirror, and the word dressing does not make it a Dressing Table."}
+{"id": "tags-072", "text": "Fridge freezer", "tier": "hard", "category": "furniture_products", "expected": "other", "note": "A kitchen appliance, not in the furniture list."}
+{"id": "tags-073", "text": "Fitted kitchen worktop", "tier": "hard", "category": "furniture_products", "expected": "other", "note": "A fitted kitchen surface is not a table or any other listed item."}
+{"id": "tags-074", "text": "Assembly service only", "tier": "hard", "category": "furniture_products", "expected": "other", "note": "A service, not a product."}
+{"id": "tags-075", "text": "Can't recall the exact item", "tier": "hard", "category": "furniture_products", "expected": "other", "note": "A can't-remember option naming no product."}
+{"id": "tags-076", "text": "How would you rate the front desk staff?", "tier": "easy", "category": "hotel_departments", "expected": ["Front Desk"]}
+{"id": "tags-077", "text": "How satisfied were you with housekeeping during your stay?", "tier": "easy", "category": "hotel_departments", "expected": ["Housekeeping"]}
+{"id": "tags-078", "text": "How was the food in our restaurant?", "tier": "easy", "category": "hotel_departments", "expected": ["Restaurant"]}
+{"id": "tags-079", "text": "How would you rate your spa treatment?", "tier": "easy", "category": "hotel_departments", "expected": ["Spa & Wellness"]}
+{"id": "tags-080", "text": "Were your towels changed daily?", "tier": "medium", "category": "hotel_departments", "expected": ["Housekeeping"]}
+{"id": "tags-081", "text": "How quick was check-in when you arrived?", "tier": "medium", "category": "hotel_departments", "expected": ["Front Desk"]}
+{"id": "tags-082", "text": "Was the breakfast buffet well stocked?", "tier": "medium", "category": "hotel_departments", "expected": ["Restaurant"]}
+{"id": "tags-083", "text": "Did the air conditioning and the shower work properly throughout your stay?", "tier": "medium", "category": "hotel_departments", "expected": ["Maintenance"]}
+{"id": "tags-084", "text": "How likely are you to recommend our hotel to a friend?", "tier": "hard", "category": "hotel_departments", "expected": [], "note": "An overall loyalty question that is about no single department."}
+{"id": "tags-085", "text": "Was your room clean, and was everything in it in working order when you arrived?", "tier": "hard", "category": "hotel_departments", "expected": ["Housekeeping", "Maintenance"], "note": "Cleanliness is Housekeeping and working order is Maintenance; neither is named."}
+{"id": "tags-086", "text": "How easy was it to book your stay on our website?", "tier": "hard", "category": "hotel_departments", "expected": [], "note": "Online booking happens before arrival and involves none of the listed departments, including Front Desk."}
+{"id": "tags-087", "text": "When you reported the broken TV to reception, how quickly was it logged and then repaired?", "tier": "hard", "category": "hotel_departments", "expected": ["Front Desk", "Maintenance"], "note": "Reception logging the report is Front Desk and the repair is Maintenance."}
+{"id": "tags-088", "text": "How did you first discover our product?", "tier": "easy", "category": "journey_stages", "expected": ["Discovery"]}
+{"id": "tags-089", "text": "How easy was it to complete your purchase?", "tier": "easy", "category": "journey_stages", "expected": ["Purchase"]}
+{"id": "tags-090", "text": "Was your delivery on time?", "tier": "easy", "category": "journey_stages", "expected": ["Delivery"]}
+{"id": "tags-091", "text": "How likely are you to renew your subscription?", "tier": "easy", "category": "journey_stages", "expected": ["Renewal"]}
+{"id": "tags-092", "text": "Did the agent resolve your issue on the first contact?", "tier": "medium", "category": "journey_stages", "expected": ["Support"]}
+{"id": "tags-093", "text": "How helpful was the setup wizard in getting you started?", "tier": "medium", "category": "journey_stages", "expected": ["Onboarding"]}
+{"id": "tags-094", "text": "Where did you first hear about us?", "tier": "medium", "category": "journey_stages", "expected": ["Discovery"]}
+{"id": "tags-095", "text": "How smooth was checkout, and did your parcel arrive when promised?", "tier": "hard", "category": "journey_stages", "expected": ["Purchase", "Delivery"], "note": "Checkout is the Purchase stage and parcel arrival is Delivery; neither tag word appears."}
+{"id": "tags-096", "text": "Did the welcome call cover everything you needed, and have you had to contact the helpdesk since?", "tier": "hard", "category": "journey_stages", "expected": ["Onboarding", "Support"], "note": "A welcome call is Onboarding and contacting the helpdesk is Support."}
+{"id": "tags-097", "text": "Thinking about ordering, shipping and getting set up: which step was the most frustrating?", "tier": "hard", "category": "journey_stages", "expected": ["Purchase", "Delivery", "Onboarding"], "note": "Three stages are named by paraphrase: ordering, shipping and getting set up."}
+{"id": "tags-098", "text": "What is your age group?", "tier": "hard", "category": "journey_stages", "expected": [], "note": "A demographic question about no journey stage."}
+{"id": "tags-099", "text": "Overall, how satisfied are you with our company?", "tier": "hard", "category": "journey_stages", "expected": [], "note": "Overall satisfaction is not tied to any one stage."}
+{"id": "tags-100", "text": "I have confidence in the senior leadership of this company.", "tier": "easy", "category": "engagement_drivers", "expected": ["Leadership"]}
+{"id": "tags-101", "text": "I am satisfied with my pay and benefits.", "tier": "easy", "category": "engagement_drivers", "expected": ["Pay & Benefits"]}
+{"id": "tags-102", "text": "My workload is manageable.", "tier": "easy", "category": "engagement_drivers", "expected": ["Workload"]}
+{"id": "tags-103", "text": "I see opportunities for career growth here.", "tier": "easy", "category": "engagement_drivers", "expected": ["Career Growth"]}
+{"id": "tags-104", "text": "I receive recognition when I do good work.", "tier": "easy", "category": "engagement_drivers", "expected": ["Recognition"]}
+{"id": "tags-105", "text": "My colleagues and I cooperate well to get things done.", "tier": "medium", "category": "engagement_drivers", "expected": ["Teamwork"]}
+{"id": "tags-106", "text": "My salary is fair compared with similar roles elsewhere.", "tier": "medium", "category": "engagement_drivers", "expected": ["Pay & Benefits"]}
+{"id": "tags-107", "text": "I have the equipment and software I need to do my job.", "tier": "medium", "category": "engagement_drivers", "expected": ["Tools & Resources"]}
+{"id": "tags-108", "text": "People of all backgrounds are treated fairly here.", "tier": "medium", "category": "engagement_drivers", "expected": ["Diversity & Inclusion"]}
+{"id": "tags-109", "text": "I can see a path to promotion in this organisation.", "tier": "medium", "category": "engagement_drivers", "expected": ["Career Growth"]}
+{"id": "tags-110", "text": "I would recommend this company as a great place to work.", "tier": "hard", "category": "engagement_drivers", "expected": [], "note": "An overall advocacy item that measures engagement itself, not any one driver."}
+{"id": "tags-111", "text": "How many years have you worked here?", "tier": "hard", "category": "engagement_drivers", "expected": [], "note": "A tenure question; length of service is not Career Growth."}
+{"id": "tags-112", "text": "Executives set a clear direction and celebrate employees' achievements.", "tier": "hard", "category": "engagement_drivers", "expected": ["Leadership", "Recognition"], "note": "Executives setting direction is Leadership and celebrating achievements is Recognition."}
+{"id": "tags-113", "text": "My workload would be manageable if our systems weren't so slow and outdated.", "tier": "hard", "category": "engagement_drivers", "expected": ["Workload", "Tools & Resources"], "note": "The statement ties workload to poor systems, so both drivers apply."}
+{"id": "tags-114", "text": "I'm fairly paid, but there is nowhere for me to progress to.", "tier": "hard", "category": "engagement_drivers", "expected": ["Pay & Benefits", "Career Growth"], "note": "Covers pay and lack of progression; the second half is negated but still about Career Growth."}
+{"id": "tags-115", "text": "How long did you wait before being seen?", "tier": "easy", "category": "patient_themes", "expected": ["Wait Times"]}
+{"id": "tags-116", "text": "How would you rate the cleanliness of your room?", "tier": "easy", "category": "patient_themes", "expected": ["Cleanliness"]}
+{"id": "tags-117", "text": "Was your pain well managed during your stay?", "tier": "easy", "category": "patient_themes", "expected": ["Pain Management"]}
+{"id": "tags-118", "text": "How easy was it to book your appointment?", "tier": "easy", "category": "patient_themes", "expected": ["Appointment Booking"]}
+{"id": "tags-119", "text": "How would you rate the quality of the food?", "tier": "easy", "category": "patient_themes", "expected": ["Food"]}
+{"id": "tags-120", "text": "Did the nurses treat you with respect and kindness?", "tier": "medium", "category": "patient_themes", "expected": ["Staff Courtesy"]}
+{"id": "tags-121", "text": "Did the physician explain your diagnosis in a way you could understand?", "tier": "medium", "category": "patient_themes", "expected": ["Doctor Communication"]}
+{"id": "tags-122", "text": "Was the invoice you received accurate and easy to understand?", "tier": "medium", "category": "patient_themes", "expected": ["Billing"]}
+{"id": "tags-123", "text": "Were you given clear instructions about what to do after going home?", "tier": "medium", "category": "patient_themes", "expected": ["Discharge Planning"]}
+{"id": "tags-124", "text": "Did the pharmacist explain what your new tablets were for and their possible side effects?", "tier": "hard", "category": "patient_themes", "expected": ["Medication"], "note": "An explanation, but given by a pharmacist about tablets, so Medication and not Doctor Communication."}
+{"id": "tags-125", "text": "Were conversations about your condition held where other patients could not overhear?", "tier": "hard", "category": "patient_themes", "expected": ["Privacy"], "note": "It asks where conversations took place, not how well anything was explained, so Privacy only."}
+{"id": "tags-126", "text": "Were the reception staff polite, and were you seen at your scheduled time?", "tier": "hard", "category": "patient_themes", "expected": ["Staff Courtesy", "Wait Times"], "note": "Politeness is Staff Courtesy and being seen on time is Wait Times; making the booking is not asked about."}
+{"id": "tags-127", "text": "Were the bathrooms kept spotless, and were your meals served hot?", "tier": "hard", "category": "patient_themes", "expected": ["Cleanliness", "Food"], "note": "Two themes by paraphrase: spotless bathrooms and hot meals."}
+{"id": "tags-128", "text": "Was it easy to get through on the phone to arrange your visit, and to park once you got here?", "tier": "hard", "category": "patient_themes", "expected": ["Appointment Booking", "Parking"], "note": "Arranging the visit by phone is Appointment Booking and the second half is Parking."}
+{"id": "tags-129", "text": "Would you recommend this hospital to friends and family?", "tier": "hard", "category": "patient_themes", "expected": [], "note": "An overall recommendation question tied to no theme."}
+{"id": "tags-130", "text": "Which ward were you admitted to?", "tier": "hard", "category": "patient_themes", "expected": [], "note": "A profiling question, not an experience theme."}
+{"id": "tags-131", "text": "How easy is the product to use?", "tier": "easy", "category": "product_feedback_themes", "expected": ["Ease of Use"]}
+{"id": "tags-132", "text": "How satisfied are you with our customer support?", "tier": "easy", "category": "product_feedback_themes", "expected": ["Customer Support"]}
+{"id": "tags-133", "text": "How would you rate the mobile app?", "tier": "easy", "category": "product_feedback_themes", "expected": ["Mobile App"]}
+{"id": "tags-134", "text": "How useful are the reporting dashboards?", "tier": "easy", "category": "product_feedback_themes", "expected": ["Reporting"]}
+{"id": "tags-135", "text": "How helpful is our documentation?", "tier": "easy", "category": "product_feedback_themes", "expected": ["Documentation"]}
+{"id": "tags-136", "text": "How quickly do pages load for you?", "tier": "medium", "category": "product_feedback_themes", "expected": ["Speed"]}
+{"id": "tags-137", "text": "Is the product good value for what you pay?", "tier": "medium", "category": "product_feedback_themes", "expected": ["Pricing"]}
+{"id": "tags-138", "text": "How well does the product connect with the other tools you use?", "tier": "medium", "category": "product_feedback_themes", "expected": ["Integrations"]}
+{"id": "tags-139", "text": "Do you get too many email alerts from us?", "tier": "medium", "category": "product_feedback_themes", "expected": ["Notifications"]}
+{"id": "tags-140", "text": "How often does the product crash or become unavailable?", "tier": "medium", "category": "product_feedback_themes", "expected": ["Reliability"]}
+{"id": "tags-141", "text": "Is there anything you wish the product could do that it can't today?", "tier": "medium", "category": "product_feedback_themes", "expected": ["Feature Requests"]}
+{"id": "tags-142", "text": "Were your invoices correct and charged on the right date?", "tier": "hard", "category": "product_feedback_themes", "expected": ["Billing"], "note": "About invoice accuracy and charge timing, not how much the product costs, so Billing and not Pricing."}
+{"id": "tags-143", "text": "Does the product work with your screen reader and keyboard-only navigation?", "tier": "hard", "category": "product_feedback_themes", "expected": ["Accessibility"], "note": "Assistive-technology support is Accessibility, not general Ease of Use or Integrations."}
+{"id": "tags-144", "text": "Did your existing spreadsheets upload correctly when you first set up your account?", "tier": "hard", "category": "product_feedback_themes", "expected": ["Onboarding", "Data Import"], "note": "Uploading existing data is Data Import and first account setup is Onboarding."}
+{"id": "tags-145", "text": "Can you find the right record fast, and are results returned without delay?", "tier": "hard", "category": "product_feedback_themes", "expected": ["Speed", "Search"], "note": "Finding records is Search and results without delay is Speed."}
+{"id": "tags-146", "text": "Is the phone version as fast and stable as the desktop one?", "tier": "hard", "category": "product_feedback_themes", "expected": ["Speed", "Reliability", "Mobile App"], "note": "Phone version is Mobile App, fast is Speed and stable is Reliability."}
+{"id": "tags-147", "text": "Does the help centre explain how to set up single sign-on and two-factor authentication?", "tier": "hard", "category": "product_feedback_themes", "expected": ["Documentation", "Security"], "note": "Help-centre articles are Documentation and the subject, sign-in protection, is Security."}
+{"id": "tags-148", "text": "Can you change the colours, layout and fields to suit your team's workflow?", "tier": "hard", "category": "product_feedback_themes", "expected": ["Customisation"], "note": "Asks whether the user can change things, not whether the look is good, so Customisation and not Visual Design."}
+{"id": "tags-149", "text": "How likely are you to recommend us to a colleague?", "tier": "hard", "category": "product_feedback_themes", "expected": [], "note": "An overall recommendation question about no specific theme."}
+{"id": "tags-150", "text": "What is your job role?", "tier": "hard", "category": "product_feedback_themes", "expected": [], "note": "A profiling question about the respondent, not the product."}

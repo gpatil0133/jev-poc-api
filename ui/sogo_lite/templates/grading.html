@@ -1,0 +1,37 @@
+{% extends "project_base.html" %}
+{% block content %}
+<p><a href="/responses/{{ project.survey_no }}">← All responses</a></p>
+<section class="card">
+  <h2>Grading list <small><code>{{ question.qid }}</code> {{ question.wording }}</small></h2>
+  {% if key_points and key_points.key_points %}
+  <p>Key points: {% for k in key_points.key_points %}<span class="chip">{{ k }}</span>{% endfor %} · maximum {{ '%g'|format(question.max_points) }} point(s)</p>
+  {% else %}<p class="muted">No key points set for this question. Add them in <a href="/design/{{ project.survey_no }}/scores">Assign Scores</a> to get suggested grades.</p>{% endif %}
+  {% if not scoring_on %}<p class="muted">Suggested grades are off (scope 8 module): grade by hand, as today.</p>
+  {% else %}<p class="muted">Lowest confidence first. A suggested grade is a draft until you confirm it. <a href="/jobs">Jobs polling test</a></p>{% endif %}
+  <table>
+    <thead><tr><th>Response</th><th>Answer</th><th>Key points found</th><th>Suggested grade</th><th>Score and feedback</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      {% set d = r.detail %}
+      <tr>
+        <td><a href="/responses/{{ project.survey_no }}/r/{{ r.response_id }}">#{{ r.response_id }}</a></td>
+        <td>{{ r.text }}</td>
+        <td>{% if d.total %}{{ d.found|length }} of {{ d.total }}{% for k in d.found %}<div class="muted">✓ {{ k }}</div>{% endfor %}{% endif %}</td>
+        <td>{% if d.grade %}{{ grades.get(d.grade, d.grade) }} <span class="pill band-{{ d.band }}">{{ d.band }}</span> <span class="muted">{{ '%.2f'|format(d.confidence or 0) }}</span>
+            {% if d.band == 'none' %}<div class="muted">too unsure to suggest a score</div>{% endif %}
+            {% elif r.status != 'confirmed' %}<span class="muted">no suggestion</span>{% endif %}</td>
+        <td>
+          <form method="post" action="/responses/{{ project.survey_no }}/grading/{{ question.qid }}" class="row tight">
+            <input type="hidden" name="response_id" value="{{ r.response_id }}">
+            <input name="score" size="3" placeholder="score" value="{{ '%g'|format(r.score) if r.score is not none }}">
+            <input name="feedback" placeholder="feedback" value="{{ r.feedback or '' }}">
+            <button class="{{ 'ghost' if r.status == 'confirmed' }}">{{ 'Update' if r.status == 'confirmed' else 'Confirm' }}</button>
+            {% if r.status %}<span class="pill {{ 'ok' if r.status == 'confirmed' else 'band-suggest' }}">{{ 'final' if r.status == 'confirmed' else 'draft' }} · {{ r.source }}</span>{% endif %}
+          </form>
+        </td>
+      </tr>
+    {% else %}<tr><td colspan="5" class="muted">No answers to grade yet.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

@@ -17,10 +17,21 @@ class Settings(BaseSettings):
     data_dir: str = "./data"
     log_dir: str = "./logs"
 
+    # ── Backend switch ────────────────────────────────────────────────────
+    # laya: self-hosted laya-serve.  jev: the TypeSafe API (external; billed per input token).
+    backend: Literal["laya", "jev"] = "laya"
+
     # ── Laya backend ──────────────────────────────────────────────────────
     laya_base_url: str = "http://127.0.0.1:8000"
     laya_api_key: str = ""
     laya_default_model: Literal["auto", "english", "multilingual"] = "auto"
+
+    # ── Jev backend (same variable names as typesafe-sdk) ─────────────────
+    typesafe_api_key: str = ""
+    typesafe_base_url: str = "https://api.typesafe.ai"
+    typesafe_default_model: str = "jev-latest"
+    # Concurrent single calls for one batch: Jev has no batch route.
+    jev_max_concurrent: int = 8
 
     # ── Calling patterns ──────────────────────────────────────────────────
     live_timeout_ms: int = 300

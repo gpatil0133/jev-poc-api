@@ -1,0 +1,15 @@
+{% extends "project_base.html" %}
+{% block content %}
+<section class="card survey">
+  <h2>Take this survey</h2>
+  <form method="post" action="/take/{{ project.survey_no }}" class="stack">
+    {% if project.anonymous %}
+    <p class="muted">This project is Anonymous: no respondent details are collected.</p>
+    {% else %}
+    <label>Respondent (optional; shown in alerts) <input name="respondent" placeholder="Sam Rivera &lt;sam@example.test&gt;"></label>
+    {% endif %}
+    <label class="check"><input type="checkbox" name="offline" value="1"> Simulate Offline Mode <span class="muted">forces the default path; no gateway call is made for this response</span></label>
+    <div class="row"><button>Start</button></div>
+  </form>
+</section>
+{% endblock %}

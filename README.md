@@ -126,6 +126,31 @@ Survey data is read from `../survey-chat/raw_data/corpno_77245/` and
 `../tagging-system/sample-data/merged.csv`. Survey 11 has no open-text question;
 61 and 38 do.
 
+### Feature-concept dataset
+
+`simulators/fixtures/feature_concepts/` is a hand-written mock dataset for the JEV
+feature concepts (Virtual Questions, Survey Coach, Fix Tracker, Feedback Owners and
+the decision-only features): 510 decisions across 13 tasks, each with the expected
+answer. `tasks.json` holds the question definitions, `requests/*.jsonl` one
+`/v1/systemone` request per row, `ground_truth.json` the planted patterns.
+Rebuild with `python -m simulators.build_feature_dataset`. It is for trying ideas
+and tuning option wording, not for accuracy numbers.
+
+## Sogo-lite mock platform
+
+`ui/` is a local stand-in for the Sogolytics Design module that calls this gateway
+the way the eight Design scopes would: shared classes, alerts on comment meaning,
+logic on text answers, builder hints, tag suggestions, Create with AI template
+pick and quiz scoring. It has an Inspector for every gateway call, fault switches,
+and a scenario runner that reports each acceptance check with the gateway normal,
+down, slow and unsure. See [ui/README.md](ui/README.md) and
+[docs/sogo-lite-mock-platform-plan.md](docs/sogo-lite-mock-platform-plan.md).
+
+```bash
+pip install -r ui/requirements.txt
+cd ui && SOGO_LITE_GATEWAY_TOKEN=<jwt> python -m uvicorn sogo_lite.app:app --port 8020
+```
+
 ## Things to know before reading the numbers
 
 - **Laya runs one forward pass at a time.** Live calls queue behind each other, and a call the gateway gave up on still costs Laya its forward pass. `LIVE_MAX_INFLIGHT` (default 4) caps how many live calls wait on Laya; the rest fall back at once with `fallback_reason: "busy"`. Size it as budget ÷ per-call latency once you have real numbers from the GPU box. Batch and job traffic share the same Laya and will slow live calls while they run.
@@ -154,7 +179,29 @@ app/
 simulators/                one script per calling pattern, plus the Laya stub
 tests/                     plain-function tests against the fake backend
 deploy/laya-compose.yaml   laya-serve on the GPU box
+ui/                        Sogo-lite mock platform (its own README and tests)
 ```
 
-Swapping to Jev later is a new base URL and key on the same backend class: Laya
-serves Jev's `/v1/systemone` wire shape.
+## Switching between Laya and Jev
+
+`BACKEND=laya | jev` in `.env` picks the model behind the gateway. It is read once
+at start-up, so change it and restart. `GET /health` reports the active one under
+`backend`, and the result cache is keyed by backend, so answers never cross over.
+
+`BACKEND=jev` calls the TypeSafe API (`https://api.typesafe.ai`) with
+`TYPESAFE_API_KEY`. It is an external service billed per input token; nothing is
+masked before it is sent. `app/backends/jev.py` absorbs where Jev differs from
+laya-serve:
+
+| laya-serve | Jev | What the gateway does |
+|---|---|---|
+| `/v1/systemone/batch` | no batch route | single calls, `JEV_MAX_CONCURRENT` (8) at a time |
+| `answer_confidence` | not returned | bands on the probability of the reported answer |
+| `option_order` for rotations | not accepted | sends the rotation with its criteria reordered |
+| `english` / `multilingual` | `jev-latest`, `jev-preview` | Laya names map to `TYPESAFE_DEFAULT_MODEL` |
+| `/health` | none | `/v1/models` stands in |
+| `X-Inference-Time-Ms` | none | `backend_ms` is empty |
+
+The option token budget (192 / 256) is Laya's; on Jev treat the budget report as a
+rough guide. A round trip to Jev measured about 370 ms median from the office
+network, so the default `LIVE_TIMEOUT_MS=300` falls back on most uncached live calls.

@@ -1,0 +1,25 @@
+﻿row_id,activity_note,expected_decision,difficulty,contact_id
+AN001,"Renewed annual trade account, no issues raised.",send,easy,C3001
+AN002,"Called to ask about opening hours, answered.",send,easy,C3002
+AN003,Order delivered and signed for.,send,easy,C3003
+AN004,Attended the spring design workshop.,send,easy,C3004
+AN005,Updated billing address.,send,easy,C3005
+AN006,"Complaint from March closed, customer confirmed they were happy with the replacement.",send,tricky,C3006
+AN007,Bought a gift card in store.,send,easy,C3007
+AN008,Requested a catalogue by post.,send,easy,C3008
+AN009,"Complaint escalated to regional manager, awaiting response.",hold,easy,C3009
+AN010,"Customer's husband passed away last week, order on pause at her request.",hold,tricky,C3010
+AN011,Refund dispute open with card provider.,hold,easy,C3011
+AN012,"Customer in hospital until end of month, delivery rescheduled.",hold,easy,C3012
+AN013,"Replacement sofa on back order, customer chasing weekly.",hold,paraphrase,C3013
+AN014,"Called very upset about damaged delivery, case open with claims team.",hold,easy,C3014
+AN015,"On maternity leave, asked us to get back in touch in the new year.",hold,paraphrase,C3015
+AN016,Engineer visit booked for Tuesday to repair the recliner.,hold,paraphrase,C3016
+AN017,Account under review after a payment failed twice.,hold,paraphrase,C3017
+AN018,Says she is travelling for six weeks and cannot receive deliveries.,hold,paraphrase,C3018
+AN019,"Customer deceased, account to be closed by family.",dont_send,easy,C3019
+AN020,Asked not to be contacted for any reason other than open orders.,dont_send,easy,C3020
+AN021,"Solicitor's letter received regarding injury claim in store, all contact via legal.",dont_send,easy,C3021
+AN022,Threatened to report us for harassment if we email again.,dont_send,paraphrase,C3022
+AN023,"Account closed at customer's request, said remove all my details.",dont_send,easy,C3023
+AN024,"Number belongs to someone else now, previous owner moved abroad.",dont_send,tricky,C3024

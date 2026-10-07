@@ -1,0 +1,28 @@
+{% extends "project_base.html" %}
+{% block content %}
+{% if project.type != 'Assessment' %}<p class="banner">Assign Scores belongs to Assessment projects. This project is a {{ project.type }}; scoring still works here for testing.</p>{% endif %}
+<form method="post" action="/design/{{ project.survey_no }}/scores">
+{% for q in questions %}
+<section class="card">
+  <h2><code>{{ q.qid }}</code> {{ q.wording }} <small>{{ QUESTION_TYPES[q.type] }}</small></h2>
+  {% if q.options %}
+  <table><thead><tr><th>Answer option</th><th>Points</th></tr></thead><tbody>
+    {% for o in q.options %}<tr><td>{{ o.text }}</td><td><input name="pts_{{ o.id }}" size="4" value="{{ '%g'|format(o.points) }}"></td></tr>{% endfor %}
+  </tbody></table>
+  <p class="muted">Scored automatically.</p>
+  {% elif q.type == 'text' %}
+  <p class="muted">Not scored automatically. A grader opens the <a href="/responses/{{ project.survey_no }}/grading/{{ q.qid }}">grading list</a> and enters a score in the Post-Population fields.</p>
+  <label>Maximum points <input name="max_{{ q.id }}" size="4" value="{{ '%g'|format(q.max_points) }}"></label>
+  {% if module_on('quiz_scoring') %}
+  {% set kp = key_points.get(q.qid) %}
+  <fieldset><legend>Model answer and key points <small>scope 8</small></legend>
+    <label>Model answer <textarea name="model_{{ q.id }}" rows="2">{{ kp.model_answer if kp }}</textarea></label>
+    <label>Key points, one per line <textarea name="kps_{{ q.id }}" rows="3">{{ kp.key_points|join('\n') if kp }}</textarea></label>
+  </fieldset>
+  {% endif %}
+  {% else %}<p class="muted">A metric question carries its own score.</p>{% endif %}
+</section>
+{% endfor %}
+<button>Save scores</button>
+</form>
+{% endblock %}

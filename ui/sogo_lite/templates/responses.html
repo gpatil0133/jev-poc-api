@@ -1,0 +1,22 @@
+{% extends "project_base.html" %}
+{% block content %}
+{% if open_questions %}
+<p>Grading lists: {% for q in open_questions %}<a class="button ghost" href="/responses/{{ project.survey_no }}/grading/{{ q.qid }}">{{ q.qid }}: {{ q.wording|truncate(50) }}</a> {% endfor %}</p>
+{% endif %}
+<table>
+  <thead><tr><th>Response</th><th>Submitted</th><th>Source</th><th>First comment</th><th>Auto score</th><th>Alerts</th><th>Notes</th></tr></thead>
+  <tbody>
+  {% for r in responses %}
+    <tr>
+      <td><a href="/responses/{{ project.survey_no }}/r/{{ r.id }}">#{{ r.id }}</a></td>
+      <td>{{ r.submitted_at or 'in progress' }}</td>
+      <td>{{ r.origin }}{% if r.offline %} <span class="pill">offline</span>{% endif %}</td>
+      <td>{{ r.comment|truncate(70) }}</td>
+      <td>{% if r.available %}{{ '%g'|format(r.score) }} / {{ '%g'|format(r.available) }}{% endif %}</td>
+      <td>{{ r.alerts or '' }}</td>
+      <td>{% if r.notes %}<span class="pill band-suggest">{{ r.notes|length }} skipped</span>{% endif %}</td>
+    </tr>
+  {% else %}<tr><td colspan="7" class="muted">No responses yet. <a href="/take/{{ project.survey_no }}">Take the survey</a>.</td></tr>{% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Jobs polling test{% endblock %}
+{% block content %}
+<h1>Jobs polling test <small>scope 8</small></h1>
+<p class="muted">Starts an asynchronous batch with <code>POST /v1/jobs</code> and follows it with <code>GET /v1/jobs/{job_id}</code>. The items are the Food-safety quiz answers, repeated. This tests progress polling only: the gateway writes job output to a JSONL file on its own host and has no endpoint that returns it, so quiz scoring uses <code>/v1/classify/batch</code> by default.</p>
+{% if not quiz %}<p class="banner warn">The seeded Food-safety quiz project is missing. Restore the seed data in Settings.</p>{% endif %}
+<form method="post" action="/jobs" class="row card">
+  <label>Answers to send <input name="items" size="6" value="{{ default_items }}"></label>
+  <button {{ 'disabled' if not quiz }}>Start a job</button>
+</form>
+{% if job_id %}
+<section class="card" id="job" data-job="{{ job_id }}">
+  <h2>Job <code>{{ job_id }}</code> <span class="pill" id="job-status">queued</span></h2>
+  <progress id="job-bar" max="100" value="0"></progress>
+  <dl class="facts" id="job-facts"></dl>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Projects{% endblock %}
+{% block content %}
+<h1>Projects</h1>
+<table>
+  <thead><tr><th>No.</th><th>Name</th><th>Type</th><th>Questions</th><th>Responses</th><th></th></tr></thead>
+  <tbody>
+  {% for p in projects %}
+    <tr>
+      <td>{{ p.survey_no }}</td>
+      <td><a href="/design/{{ p.survey_no }}">{{ p.name }}</a>{% if p.anonymous %} <span class="pill">Anonymous</span>{% endif %}</td>
+      <td>{{ p.type }}</td><td>{{ p.questions }}</td>
+      <td><a href="/responses/{{ p.survey_no }}">{{ p.responses }}</a></td>
+      <td class="actions">
+        <a href="/take/{{ p.survey_no }}">Take</a>
+        <form method="post" action="/projects/{{ p.survey_no }}/delete" data-confirm="Delete project {{ p.survey_no }} and its responses?"><button class="link danger">Delete</button></form>
+      </td>
+    </tr>
+  {% else %}<tr><td colspan="6" class="muted">No projects yet.</td></tr>{% endfor %}
+  </tbody>
+</table>
+<section class="card">
+  <h2>New project</h2>
+  <form method="post" action="/projects" class="row">
+    <label>Name <input name="name" required></label>
+    <label>Type <select name="type">{% for t in PROJECT_TYPES %}<option>{{ t }}</option>{% endfor %}</select></label>
+    <label class="check"><input type="checkbox" name="anonymous" value="1"> Anonymous</label>
+    <button>Create</button>
+    <a class="button ghost" href="/create-ai">Create with AI</a>
+  </form>
+</section>
+{% endblock %}

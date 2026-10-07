@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Thank you{% endblock %}
+{% block content %}
+<section class="card survey">
+  <h2>Thank you</h2>
+  <p>Your response has been submitted.</p>
+</section>
+<section class="card">
+  <h3>For the tester</h3>
+  <p>Response #{{ response.id }} of {{ project.name }}. Rules and alerts run just after submit, so give them a moment.</p>
+  <div class="row">
+    <a class="button" href="/responses/{{ project.survey_no }}/r/{{ response.id }}">Open the response</a>
+    <a class="button ghost" href="/inspector?response_id={{ response.id }}">Gateway calls for this response</a>
+    <a class="button ghost" href="/take/{{ project.survey_no }}">Take it again</a>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "project_base.html" %}
+{% block content %}
+<p><a href="/design/{{ project.survey_no }}">← All questions</a></p>
+<section class="card">
+  <h2><code>{{ question.qid }}</code> · {{ QUESTION_TYPES[question.type] }} · page {{ question.page_ord }}</h2>
+  <div id="hints" data-poll="/design/{{ project.survey_no }}/q/{{ question.id }}/hints">{% include "_hints.html" %}</div>
+  <form method="post" action="/design/{{ project.survey_no }}/q/{{ question.id }}" class="stack">
+    <label>Wording <input name="wording" value="{{ question.wording }}" required></label>
+    <div class="row">
+      <label>Response <select name="required">{% for k, v in REQUIRED_MODES.items() %}<option value="{{ k }}" {{ 'selected' if question.required == k }}>{{ v }}</option>{% endfor %}</select></label>
+      {% if module_on('pii_question') %}
+      <label>Personal data <select name="pii_kind"><option value="">not personal data</option>{% for k, v in PII_KINDS.items() %}<option value="{{ k }}" {{ 'selected' if question.pii_kind == k }}>{{ v }}</option>{% endfor %}</select></label>
+      {% endif %}
+      {% if question.type == 'metric' %}
+      <label>Metric <select name="metric_kind">{% for k, v in METRICS.items() %}<option value="{{ k }}" {{ 'selected' if question.metric_kind == k }}>{{ v[0] }} ({{ v[1] }}–{{ v[2] }})</option>{% endfor %}</select></label>
+      {% endif %}
+    </div>
+    {% if question.type in ('radio', 'checkbox') %}
+    <label>Answer options, one per line. Add <code>| points</code> to score an option.
+      <textarea name="options" rows="5">{{ options_text }}</textarea></label>
+    {% endif %}
+    {% if question.type == 'text' %}
+    <fieldset>
+      <legend>Follow-up</legend>
+      <label class="check"><input type="checkbox" name="is_followup" value="1" {{ 'checked' if question.is_followup }}> This Text Box is a follow-up question</label>
+      <div class="row">
+        <label>of metric question <select name="parent_qid"><option value="">(none)</option>{% for m in metric_questions %}<option value="{{ m.qid }}" {{ 'selected' if question.parent_qid == m.qid }}>{{ m.qid }}: {{ m.wording }}</option>{% endfor %}</select></label>
+        <label>shown when the score is from <input name="followup_min" size="3" value="{{ '%g'|format(question.followup_min) if question.followup_min is not none }}"></label>
+        <label>to <input name="followup_max" size="3" value="{{ '%g'|format(question.followup_max) if question.followup_max is not none }}"></label>
+      </div>
+      <p class="muted">Leave the score range empty to always show it. Today the trigger is the score only.</p>
+    </fieldset>
+    {% endif %}
+    <div class="row"><button>Save question</button></div>
+  </form>
+  <form method="post" action="/design/{{ project.survey_no }}/q/{{ question.id }}/delete" data-confirm="Delete this question and the rules that use it?"><button class="link danger">Delete question</button></form>
+</section>
+
+{% if classes_on %}
+<section class="card" id="classes">
+  <h2>Classes <small>scope 1: defined once, read by Logic and by Rules &amp; Alerts</small></h2>
+  {% if class_set %}
+  <p>{% if class_set.dirty %}<span class="pill warn">Unsynced local draft</span> {{ class_set.sync_error or 'Not saved to the gateway yet.' }} Rules cannot use it.
+     {% else %}<span class="pill ok">Saved to the gateway</span> {{ class_set.synced_at }} · question hash <code>{{ class_set.question_hash }}</code>{% endif %}</p>
+  {% else %}<p class="muted">No classes on this question yet.</p>{% endif %}
+  <form method="post" action="/design/{{ project.survey_no }}/q/{{ question.id }}/classes" class="stack">
+    <fieldset>
+      <legend>Ready-made tasks from the gateway catalog</legend>
+      {% for t in catalog %}
+      <label class="check"><input type="checkbox" name="tasks" value="{{ t.id }}" {{ 'checked' if t.id in draft.tasks }}>
+        <code>{{ t.id }}</code> <span class="muted">{{ t.type }} · {{ t.description }}</span></label>
+      {% else %}<p class="muted">The catalog is not available. Use "Refresh catalog" once the gateway answers.</p>{% endfor %}
+    </fieldset>
+    <fieldset>
+      <legend>Custom classes</legend>
+      <p class="muted">One label per line as <code>label: one-line description</code>. A yes / no question needs instructions and the two lines <code>true: …</code> and <code>false: …</code>. Clear the name to remove a row.</p>
+      {% for r in custom_rows %}
+      <div class="spec">
+        <div class="row">
+          <label>Name <input name="c_id_{{ loop.index0 }}" value="{{ r.id }}" placeholder="e.g. topic"></label>
+          <label>Type <select name="c_type_{{ loop.index0 }}">{% for k, v in {'choice': 'choice (pick one)', 'labels': 'labels (any that apply)', 'yesno': 'yes / no'}.items() %}<option value="{{ k }}" {{ 'selected' if r.type == k }}>{{ v }}</option>{% endfor %}</select></label>
+          <label class="grow">Instructions (optional; the gateway writes them when empty) <input name="c_instr_{{ loop.index0 }}" value="{{ r.instructions }}" maxlength="400"></label>
+        </div>
+        <textarea name="c_lines_{{ loop.index0 }}" rows="3" placeholder="negative: dissatisfied or critical">{{ r.lines }}</textarea>
+      </div>
+      {% endfor %}
+    </fieldset>
+    <div class="row">
+      <label><code>act</code> threshold <input name="act" size="4" value="{{ draft.act if draft.act is not none }}" placeholder="default"></label>
+      <label><code>suggest</code> threshold <input name="suggest" size="4" value="{{ draft.suggest if draft.suggest is not none }}" placeholder="default"></label>
+      <label>Model <select name="model">{% for m in ['', 'auto', 'english', 'multilingual'] %}<option value="{{ m }}" {{ 'selected' if (draft.model or '') == m }}>{{ m or 'gateway default' }}</option>{% endfor %}</select></label>
+    </div>
+    <div class="row">
+      <button name="action" value="check" class="ghost">Check budget</button>
+      <button name="action" value="save">Save</button>
+      <button name="action" value="verify" class="ghost">Check sync with the gateway</button>
+      <button name="action" value="refresh" class="ghost">Refresh catalog</button>
+    </div>
+  </form>
+  {% if budget_error %}<p class="banner warn">Budget check: {{ budget_error }}</p>{% endif %}
+  {% set report = budget or (class_set.budget if class_set else none) %}
+  {% if report %}
+  <h3>{{ 'Budget check (not saved)' if budget else 'Budget report from the last save' }}</h3>
+  <table>
+    <thead><tr><th>Question</th><th>Options</th><th>Option tokens</th><th>Instruction tokens</th><th>Head / budget</th><th>Status</th></tr></thead>
+    <tbody>{% for line in report.lines %}
+      <tr><td><code>{{ line.id }}</code></td><td>{{ line.options }}</td><td>{{ line.option_tokens }}</td><td>{{ line.instruction_tokens }}</td>
+          <td>{{ line.head_tokens }} / {{ line.budget }}</td>
+          <td><span class="pill {{ {'ok': 'ok', 'warn': 'band-suggest', 'over': 'warn'}[line.status] }}">{{ line.status }}</span> {{ line.detail }}</td></tr>
+    {% endfor %}</tbody>
+  </table>
+  <p class="muted">Model {{ report.model }} · {{ report.wire_questions }} question(s) on the wire · token counts are the gateway's estimate.
+    {% if budget and not report.ok %}<strong>A line marked over blocks saving.</strong>{% endif %}
+    {% for w in report.warnings %} {{ w }}{% endfor %}</p>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

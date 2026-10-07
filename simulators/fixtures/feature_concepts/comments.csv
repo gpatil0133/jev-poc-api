@@ -1,0 +1,65 @@
+﻿comment_id,contact_id,branch,nps,text,vq_loyalty_app,coach_question,blind_spot_topic,owner_team,callback,issue,difficulty
+CM001,C1001,Online,3,The new app keeps logging me out before I can claim my points.,yes_negative,none_of_these,loyalty_app,digital,unresolved,app_login,easy
+CM002,C1002,Downtown,6,"Tried to scan my rewards code at the till and the app froze, so I lost the discount that day.",yes_negative,none_of_these,loyalty_app,digital,not_unresolved,none,tricky
+CM003,C1003,Online,2,I have reset my password four times and still cannot sign in to the rewards thing on my phone.,yes_negative,none_of_these,loyalty_app,digital,unresolved,app_login,paraphrase
+CM004,C1004,Riverside,5,Points from my last two purchases never showed up in the app.,yes_negative,none_of_these,loyalty_app,digital,unresolved,none,easy
+CM005,C1005,Northgate,4,"Honestly the old paper stamp card was better than this app, it is slow and confusing.",yes_negative,none_of_these,loyalty_app,digital,not_unresolved,none,easy
+CM006,C1006,Online,1,"App says my account does not exist, but I have been a member for three years. Nobody has replied to my email about it.",yes_negative,none_of_these,loyalty_app,digital,unresolved,app_login,easy
+CM007,C1007,Downtown,7,"Nice store, helpful people. Only gripe is the loyalty app asking me to log in every single time.",yes_negative,staff,,digital,not_unresolved,app_login,tricky
+CM008,C1008,Online,3,Why does the app need my location just to show my points? Uninstalled it.,yes_negative,none_of_these,loyalty_app,digital,not_unresolved,none,easy
+CM009,C1009,Riverside,5,"The barcode in the app would not scan at self checkout, had to give my phone number instead.",yes_negative,none_of_these,loyalty_app,digital,not_unresolved,none,easy
+CM010,C1010,Downtown,10,"Love collecting points on the app, it saves me money every week.",yes_positive,none_of_these,loyalty_app,digital,not_unresolved,none,easy
+CM011,C1011,Online,9,The app made reordering my usual cushions really quick.,yes_positive,none_of_these,loyalty_app,digital,not_unresolved,none,easy
+CM012,C1012,Northgate,9,"Got a birthday voucher through the rewards app, lovely touch.",yes_positive,none_of_these,loyalty_app,digital,not_unresolved,none,easy
+CM013,C1013,Riverside,8,Checking stock in your app before driving over is so handy.,yes_positive,none_of_these,loyalty_app,digital,not_unresolved,none,easy
+CM014,C1014,Online,10,Signed up to the loyalty app last month and already had two free deliveries from it.,yes_positive,none_of_these,loyalty_app,digital,not_unresolved,none,tricky
+CM015,C1015,Downtown,9,"App works great now after the update, points appear straight away.",yes_positive,none_of_these,loyalty_app,digital,not_unresolved,none,easy
+CM016,C1016,Northgate,4,Spent twenty minutes circling for a parking space and nearly gave up.,not_mentioned,none_of_these,parking,facilities,not_unresolved,none,easy
+CM017,C1017,Riverside,5,"The car park lighting is terrible, I did not feel safe walking back with my bags after dark.",not_mentioned,none_of_these,parking,facilities,not_unresolved,none,easy
+CM018,C1018,Northgate,6,Nowhere to leave the car on a Saturday. Please sort this out.,not_mentioned,none_of_these,parking,facilities,not_unresolved,none,paraphrase
+CM019,C1019,Downtown,7,Shop is great but the multi-storey next door charges a fortune.,not_mentioned,none_of_these,parking,facilities,not_unresolved,none,tricky
+CM020,C1020,Riverside,3,"Ticket machine swallowed my coins and the barrier would not lift, I was stuck for ten minutes.",not_mentioned,none_of_these,parking,facilities,not_unresolved,none,paraphrase
+CM021,C1021,Northgate,5,"The spaces are too narrow for a family car, someone scratched my door.",not_mentioned,none_of_these,parking,facilities,not_unresolved,none,paraphrase
+CM022,C1022,Riverside,8,"Plenty of parking and it was free, which made a nice change.",not_mentioned,none_of_these,parking,facilities,not_unresolved,none,easy
+CM023,C1023,Northgate,4,"No disabled bays near the entrance, my mother had to walk the whole length of the lot.",not_mentioned,none_of_these,parking,facilities,not_unresolved,none,paraphrase
+CM024,C1024,Downtown,6,"Could not find where to park the van for collection, signage is poor.",not_mentioned,none_of_these,parking,facilities,not_unresolved,none,easy
+CM025,C1025,Riverside,5,Lift from the car park level has been out of order for weeks.,not_mentioned,none_of_these,parking,facilities,not_unresolved,none,tricky
+CM026,C1026,Northgate,6,"Friendly team inside, but getting in and out of the car park on a weekend is a nightmare.",not_mentioned,none_of_these,parking,facilities,not_unresolved,none,tricky
+CM027,C1027,Online,2,The sofa arrived two weeks late and the driver left it outside in the rain.,not_mentioned,delivery,,delivery,not_unresolved,late_delivery,easy
+CM028,C1028,Online,3,"Still waiting for the dining table I ordered in August. No update, no tracking.",not_mentioned,delivery,,delivery,unresolved,late_delivery,easy
+CM029,C1029,Online,4,Courier turned up a day after the slot I paid extra for.,not_mentioned,delivery,,delivery,not_unresolved,late_delivery,paraphrase
+CM030,C1030,Northgate,5,"Wardrobe came with a cracked door panel, box looked like it had been dropped, and I am still waiting for a replacement panel.",not_mentioned,delivery,,delivery,unresolved,damaged_item,easy
+CM031,C1031,Online,9,"Delivery guys were brilliant, carried everything upstairs and took the packaging away.",not_mentioned,delivery,,delivery,not_unresolved,none,easy
+CM032,C1032,Online,8,Arrived a day early and well packed.,not_mentioned,delivery,,delivery,not_unresolved,none,easy
+CM033,C1033,Riverside,3,"Promised by Friday, came the following Thursday. I took a day off work for nothing.",not_mentioned,delivery,,delivery,not_unresolved,late_delivery,paraphrase
+CM034,C1034,Online,2,Mirror was smashed when I opened the box. Third time I am writing about this.,not_mentioned,delivery,,delivery,unresolved,damaged_item,easy
+CM035,C1035,Online,6,Tracking link never worked but the order did show up on time.,not_mentioned,delivery,,delivery,not_unresolved,none,tricky
+CM036,C1036,Downtown,4,Two of the six chairs are missing from my order and nobody can tell me where they are.,not_mentioned,delivery,,delivery,unresolved,none,tricky
+CM037,C1037,Northgate,2,I was charged twice for the same rug and my refund still has not arrived after three weeks.,not_mentioned,billing,,billing,unresolved,billing_error,easy
+CM038,C1038,Northgate,3,Invoice shows the full price even though the sale discount was applied at the till. I need a corrected invoice for my expenses.,not_mentioned,billing,,billing,unresolved,billing_error,easy
+CM039,C1039,Online,4,Delivery fee was added twice at checkout. It was refunded quickly once I called.,not_mentioned,billing,,billing,not_unresolved,billing_error,tricky
+CM040,C1040,Riverside,9,Paying was quick and the receipt was emailed straight away.,not_mentioned,billing,,billing,not_unresolved,none,easy
+CM041,C1041,Northgate,3,They took the deposit and then the whole amount as well. Can someone ring me?,not_mentioned,billing,,billing,unresolved,billing_error,paraphrase
+CM042,C1042,Downtown,8,"Refund for the returned lamp came through in two days, no fuss.",not_mentioned,billing,,billing,not_unresolved,none,easy
+CM043,C1043,Online,3,Finance option at checkout quoted 0% and my statement shows interest.,not_mentioned,billing,,billing,unresolved,billing_error,paraphrase
+CM044,C1044,Northgate,6,"Prices on the shelf did not match what scanned at the till, had to get the manager over.",not_mentioned,billing,,billing,not_unresolved,billing_error,tricky
+CM045,C1045,Riverside,7,"No complaints about the bill, just wish you took Amex.",not_mentioned,billing,,billing,not_unresolved,none,easy
+CM046,C1046,Downtown,10,Everyone I spoke to was patient and helpful.,not_mentioned,staff,,store_staff,not_unresolved,none,easy
+CM047,C1047,Riverside,2,The assistant rolled her eyes when I asked for help and walked off.,not_mentioned,staff,,store_staff,not_unresolved,none,easy
+CM048,C1048,Northgate,9,Maya at the design desk spent an hour helping us plan the kitchen.,not_mentioned,staff,,store_staff,not_unresolved,none,easy
+CM049,C1049,Downtown,4,Could not find anyone to help me on the shop floor.,not_mentioned,staff,,store_staff,not_unresolved,none,paraphrase
+CM050,C1050,Riverside,3,"Was told the item was in stock, drove forty minutes, and it was not. Nobody apologised.",not_mentioned,staff,,store_staff,not_unresolved,none,tricky
+CM051,C1051,Northgate,8,Lovely welcome at the door.,not_mentioned,staff,,store_staff,not_unresolved,none,paraphrase
+CM052,C1052,Downtown,5,"Manager was dismissive when I raised the damaged table, said it was not his department. I still need it sorted.",not_mentioned,staff,,store_staff,unresolved,damaged_item,tricky
+CM053,C1053,Riverside,9,The team at Riverside always remember my name.,not_mentioned,staff,,store_staff,not_unresolved,none,easy
+CM054,C1054,Online,3,"The bookcase is a bit wobbly, you get what you pay for I suppose.",not_mentioned,product,,product,not_unresolved,none,easy
+CM055,C1055,Downtown,9,"Really solid oak table, worth every penny.",not_mentioned,product,,product,not_unresolved,none,easy
+CM056,C1056,Online,4,Colour is nothing like the photos on the website.,not_mentioned,product,,product,not_unresolved,none,tricky
+CM057,C1057,Northgate,5,"Assembly instructions were missing a whole page, had to work it out from a video.",not_mentioned,product,,product,not_unresolved,none,easy
+CM058,C1058,Riverside,8,Mattress is the best sleep I have had in years.,not_mentioned,product,,product,not_unresolved,none,paraphrase
+CM059,C1059,Online,2,Zip on the cushion cover broke the first time I washed it and I want a replacement.,not_mentioned,product,,product,unresolved,none,tricky
+CM060,C1060,Downtown,7,Decent quality for the price.,not_mentioned,product,,product,not_unresolved,none,easy
+CM061,C1061,Riverside,7,ok,not_mentioned,none_of_these,,none,not_unresolved,none,easy
+CM062,C1062,Online,8,Nothing to add.,not_mentioned,none_of_these,,none,not_unresolved,none,easy
+CM063,C1063,Northgate,5,asdf test,not_mentioned,none_of_these,,none,not_unresolved,none,easy
+CM064,C1064,Downtown,9,All good thanks,not_mentioned,none_of_these,,none,not_unresolved,none,easy
