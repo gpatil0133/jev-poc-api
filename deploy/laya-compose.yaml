@@ -18,10 +18,10 @@ services:
       sh -c "pip install 'laya[serve]==0.3.27' && laya-serve"
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "8011:8011"
     environment:
       LAYA_HOST: "0.0.0.0"
-      LAYA_PORT: "8000"
+      LAYA_PORT: "8011"
       LAYA_DEVICE: cuda
       LAYA_MODELS: english,multilingual
       LAYA_PRELOAD: "1"
