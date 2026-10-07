@@ -5,13 +5,13 @@
 <section class="card">
   <h2>Gateway</h2>
   <dl class="facts">
-    <dt>Base URL</dt><dd><code>{{ health.base_url }}</code> <span class="muted">from <code>config.json</code></span></dd>
+    <dt>Base URL</dt><dd><code>{{ health.base_url }}</code> <span class="muted">from {{ health.base_url_source }}; set <code>SOGO_LITE_GATEWAY_URL</code> in <code>.env</code> to change it</span></dd>
     <dt>Status</dt><dd>{% if health.reachable %}<span class="pill ok">{{ health.status }}</span> backend <strong>{{ health.backend }}</strong> · models: {{ health.loaded|join(', ') or 'none' }} on {{ health.device }} · {{ health.tasks }} catalog tasks · {{ health.cache_entries }} cache entries
         {% else %}<span class="pill warn">unreachable</span> {{ health.error }}{% endif %}</dd>
-    <dt>Token</dt><dd>{% if not token_present %}<span class="pill warn">missing</span> set <code>{{ TOKEN_ENV }}</code> in the environment and restart
+    <dt>Token</dt><dd>{% if not token_present %}<span class="pill warn">missing</span> set <code>{{ TOKEN_ENV }}</code> in <code>.env</code> and restart
         {% elif health.token == 'rejected' %}<span class="pill warn">gateway token rejected</span>
         {% elif health.token == 'ok' %}<span class="pill ok">accepted</span>
-        {% else %}<span class="pill">set, not used yet</span>{% endif %} <span class="muted">read from the environment only; never stored or logged</span></dd>
+        {% else %}<span class="pill">set, not used yet</span>{% endif %} <span class="muted">read from the environment or <code>.env</code>; never stored or logged</span></dd>
     <dt>Timeouts</dt><dd>{% for k, v in timeouts.items() %}{{ k }} {{ v }} ms{{ ' · ' if not loop.last }}{% endfor %} <span class="muted">from <code>config.json</code></span></dd>
     <dt>Database</dt><dd><code>{{ db_file }}</code></dd>
   </dl>

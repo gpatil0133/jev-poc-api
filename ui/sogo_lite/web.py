@@ -13,6 +13,7 @@ from starlette.datastructures import FormData
 
 from sogo_lite import db, engine, gateway, modules
 from sogo_lite.config import TOKEN_ENV, gateway_token, get_settings
+from sogo_lite.modules.pii import KINDS as PII_KINDS
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(PACKAGE_DIR / "templates"))
@@ -31,7 +32,7 @@ templates.env.filters["pretty"] = _pretty
 templates.env.globals.update(
     module_on=modules.is_on, MODULES=modules.MODULES, MODULE_NAMES=modules.MODULE_NAMES,
     QUESTION_TYPES=engine.QUESTION_TYPES, METRICS=engine.METRICS, REQUIRED_MODES=engine.REQUIRED_MODES,
-    PROJECT_TYPES=engine.PROJECT_TYPES, TOKEN_ENV=TOKEN_ENV,
+    PROJECT_TYPES=engine.PROJECT_TYPES, TOKEN_ENV=TOKEN_ENV, PII_KINDS=PII_KINDS,
 )
 
 

@@ -3,6 +3,10 @@
 Classes are defined once on a text question and saved to the gateway as a binding.
 An answer is classified once per response; Logic and Rules & Alerts both read the
 stored result for as long as the class set (its `question_hash`) is unchanged.
+
+The class set and the classify-once store are also what scopes 2 and 3 run on, so
+they stay in use when this module is off. Off means: no Classes tab, and rules read
+only the classes a scope 2 or 3 rule editor added (see `readable`).
 """
 from __future__ import annotations
 
@@ -18,6 +22,10 @@ CATALOG_SETTING = "catalog"
 CATALOG_RETRY_S = 30.0
 ID_PATTERN = re.compile(r"^[A-Za-z0-9_.\-]{1,64}$")
 SPEC_TYPES = {"choice": "choice (pick one)", "labels": "labels (any that apply)", "yesno": "yes / no"}
+# The ready-made tasks this scope is about: classes shared by a branch and an alert.
+SHARED_TASKS = ("comment.sentiment", "comment.response_type")
+# Answer ids a scope 2 or 3 rule editor adds: catalog meanings, "means_…" and "about_…".
+RULE_EDITOR_PREFIXES = ("meaning.", "comment.", "means_", "about_")
 
 _catalog_failed_at = 0.0
 
@@ -214,8 +222,21 @@ def ensure_yesno(survey_no: int, qid: str, spec_id: str, instructions: str, yes:
     return save(survey_no, qid, cs["tasks"], custom, cs["act"], cs["suggest"], cs["model"])
 
 
+def readable(ref: str) -> bool:
+    """Can a rule read this class? Always when the module is on. When it is off, only
+    the classes the rule editors of scopes 2 and 3 added for themselves."""
+    if modules.is_on(MODULE):
+        return True
+    answer_id = ref.partition("|")[0]
+    return answer_id not in SHARED_TASKS and answer_id.startswith(RULE_EDITOR_PREFIXES)
+
+
 def class_refs(cs: Optional[dict[str, Any]]) -> list[dict[str, str]]:
     """Every (answer id, label) a rule can read from a class set, as `answer_id|label`."""
+    return [r for r in _all_refs(cs) if readable(r["ref"])]
+
+
+def _all_refs(cs: Optional[dict[str, Any]]) -> list[dict[str, str]]:
     if not cs:
         return []
     refs: list[dict[str, str]] = []
@@ -254,11 +275,12 @@ def classify_answer(resp: dict[str, Any], qid: str, text: str, *, kind: str, tri
                     module: str) -> Classification:
     """Return the stored classification of this answer, or classify it now."""
     survey_no = resp["survey_no"]
-    if not modules.is_on(MODULE):
-        return Classification(None, "shared classes module is off")
     cs = get(survey_no, qid)
     if not usable(cs):
         return Classification(None, "class set is not saved to the gateway")
+    # Ids only: this runs on the live page, so it must not go and fetch the catalog.
+    if not any(readable(answer_id) for answer_id in cs["tasks"] + [s["id"] for s in cs["custom"]]):
+        return Classification(None, "shared classes module is off")
     if resp["offline"]:
         return Classification(None, "offline mode")
     if not (text or "").strip():
@@ -294,7 +316,7 @@ def meets(answers: dict[str, dict[str, Any]], ref: str, min_prob: Optional[float
     stricter than a branch on one classification. Without one, the band decides."""
     answer_id, _, label = ref.partition("|")
     answer = answers.get(answer_id)
-    if not answer:
+    if not answer or not readable(ref):
         return False, 0.0
     probability = float((answer.get("probabilities") or {}).get(label, 0.0))
     if answer.get("_forced"):

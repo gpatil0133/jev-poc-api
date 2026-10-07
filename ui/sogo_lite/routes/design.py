@@ -9,7 +9,9 @@ from fastapi.responses import HTMLResponse
 from starlette.datastructures import FormData
 
 from sogo_lite import create_ai, db, engine, events, modules, seed, suggestions
-from sogo_lite.modules import alert_meaning, design_hints, logic_text, quiz_scoring, shared_classes, tag_suggest
+from sogo_lite.modules import (
+    alert_meaning, design_hints, logic_text, pii, quiz_scoring, shared_classes, tag_suggest,
+)
 from sogo_lite.web import back, form_data, project_or_404, redirect, render, to_float, unsynced_class_sets
 
 router = APIRouter()
@@ -133,9 +135,11 @@ def save_question(survey_no: int, question_id: int, background: BackgroundTasks,
     wording = (form.get("wording") or "").strip() or question["wording"]
     required = form.get("required") if form.get("required") in engine.REQUIRED_MODES else "none"
     is_followup = 1 if form.get("is_followup") else 0
-    db.run("UPDATE question SET wording=?, required=?, metric_kind=?, is_followup=?, parent_qid=?,"
+    # The field is only on the form while the module is on; otherwise the mark is kept.
+    pii_kind = (form.get("pii_kind") or None) if "pii_kind" in form else question["pii_kind"]
+    db.run("UPDATE question SET wording=?, required=?, pii_kind=?, metric_kind=?, is_followup=?, parent_qid=?,"
            " followup_min=?, followup_max=? WHERE id=?",
-           wording, required, form.get("metric_kind") if question["type"] == "metric" else None,
+           wording, required, pii_kind if pii_kind in pii.KINDS else None, form.get("metric_kind") if question["type"] == "metric" else None,
            is_followup if question["type"] == "text" else 0,
            (form.get("parent_qid") or None) if is_followup else None,
            to_float(form.get("followup_min")) if is_followup else None,

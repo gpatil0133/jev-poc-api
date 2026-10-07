@@ -72,7 +72,7 @@ def delete_project(survey_no: int) -> None:
     for q in db.rows("SELECT id FROM question WHERE survey_no=?", survey_no):
         delete_question(q["id"])
     for rid in [r["id"] for r in db.rows("SELECT id FROM response WHERE survey_no=?", survey_no)]:
-        for table in ("response_answer", "post_populate", "classification_result"):
+        for table in ("response_answer", "post_populate", "classification_result", "pii_flag"):
             db.run(f"DELETE FROM {table} WHERE response_id=?", rid)
     for table in ("response", "page", "logic_rule", "alert_rule", "sink_log", "class_set",
                   "suggestion", "key_point_set", "project"):

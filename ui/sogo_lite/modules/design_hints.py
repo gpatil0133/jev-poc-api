@@ -1,10 +1,11 @@
-"""Scopes 4 and 5: builder hints on `question.saved` (plan sections 8.4 and 8.5).
+"""Scopes 4, 5 and 9: builder hints on `question.saved` (plan sections 8.4 and 8.5).
 
-  4. sensitive question  -> suggest Encouraged Response instead of Mandatory
-  5. Text Box            -> suggest marking it as a "why" follow-up
+  4. sensitive question        -> suggest Encouraged Response instead of Mandatory
+  5. Text Box                  -> suggest marking it as a "why" follow-up
+  9. asks for personal data    -> suggest marking the question as personal data
 
-Both read the question wording only, and share one classify call when both are on.
-Nothing is applied until the author accepts the suggestion.
+All read the question wording only, and share one classify call when more than one
+is on. Nothing is applied until the author accepts the suggestion.
 """
 from __future__ import annotations
 
@@ -12,10 +13,12 @@ import hashlib
 from typing import Any
 
 from sogo_lite import db, engine, events, gateway, modules
+from sogo_lite.modules import pii
 
 SENSITIVE_MODULE = "sensitive_hint"
 FOLLOWUP_MODULE = "followup_flag"
-KINDS = ("sensitive", "followup")
+KIND_MODULES = {"sensitive": SENSITIVE_MODULE, "followup": FOLLOWUP_MODULE, "pii": pii.QUESTION_MODULE}
+KINDS = tuple(KIND_MODULES)
 
 SENSITIVE_SPEC: dict[str, Any] = {
     "id": "sensitive", "type": "yesno",
@@ -38,7 +41,7 @@ FOLLOWUP_SPEC: dict[str, Any] = {
 
 def _signature(question: dict[str, Any], wanted: list[str]) -> str:
     raw = "|".join([question["wording"], question["type"], question["required"],
-                    str(question["is_followup"]), ",".join(wanted)])
+                    str(question["is_followup"]), question["pii_kind"] or "", ",".join(wanted)])
     return hashlib.sha1(raw.encode("utf-8")).hexdigest()[:16]
 
 
@@ -56,6 +59,8 @@ def _on_question_saved(question: dict[str, Any], **_: Any) -> None:
     wanted: list[tuple[str, dict[str, Any]]] = []
     if modules.is_on(SENSITIVE_MODULE):
         wanted.append((SENSITIVE_MODULE, SENSITIVE_SPEC))
+    if modules.is_on(pii.QUESTION_MODULE):
+        wanted.append((pii.QUESTION_MODULE, pii.QUESTION_SPEC))
     if modules.is_on(FOLLOWUP_MODULE) and question["type"] == "text" and not question["is_followup"]:
         wanted.append((FOLLOWUP_MODULE, FOLLOWUP_SPEC))
     if not wanted:
@@ -70,7 +75,7 @@ def _on_question_saved(question: dict[str, Any], **_: Any) -> None:
         body["context"] = {"previous_question": previous[0]["wording"]}
     result = gateway.call("POST", "/v1/classify", body, module="+".join(m for m, _ in wanted),
                           trigger="question.saved", kind="author", survey_no=question["survey_no"])
-    db.run("DELETE FROM suggestion WHERE target_type='question' AND target_id=? AND kind IN (?,?)",
+    db.run("DELETE FROM suggestion WHERE target_type='question' AND target_id=? AND kind IN (?,?,?)",
            question["id"], *KINDS)
     if result.fallback:
         gateway.set_outcome(result.log_id, "no hint (fallback)")
@@ -87,6 +92,10 @@ def _on_question_saved(question: dict[str, Any], **_: Any) -> None:
             outcomes.append("sensitive hint created")
         else:
             outcomes.append("sensitive, but the setting already matches: no hint")
+    kind = pii.found_kind(result.answers.get(pii.QUESTION_SPEC["id"]) or {})
+    if kind and kind != question["pii_kind"]:
+        _suggest("pii", question, {"pii_kind": kind}, result.answers[pii.QUESTION_SPEC["id"]], signature)
+        outcomes.append(f"personal data hint created: {pii.KINDS[kind].lower()}")
     followup = result.answers.get("followup")
     if followup and followup["band"] in ("act", "suggest"):
         parent = next((q["qid"] for q in previous if q["type"] == "metric"), None)
@@ -99,19 +108,24 @@ def _suggest(kind: str, question: dict[str, Any], proposed: dict[str, Any], answ
              signature: str) -> None:
     db.run("INSERT INTO suggestion(kind, survey_no, target_type, target_id, signature, proposed, confidence,"
            " band, created_at) VALUES(?,?,?,?,?,?,?,?,?)", kind, question["survey_no"], "question",
-           question["id"], signature, db.dumps(proposed), answer.get("value"), answer["band"], db.now())
+           question["id"], signature, db.dumps(proposed),
+           answer["value"] if answer.get("value") is not None else answer.get("confidence"),
+           answer["band"], db.now())
 
 
 def pending(question_id: int) -> list[dict[str, Any]]:
     found = db.rows("SELECT * FROM suggestion WHERE target_type='question' AND target_id=? AND status='pending'"
-                    " AND kind IN (?,?) ORDER BY id", question_id, *KINDS)
-    return [s for s in found
-            if modules.is_on(SENSITIVE_MODULE if s["kind"] == "sensitive" else FOLLOWUP_MODULE)]
+                    " AND kind IN (?,?,?) ORDER BY id", question_id, *KINDS)
+    for s in found:
+        s["proposed"] = db.loads(s["proposed"], {})
+    return [s for s in found if modules.is_on(KIND_MODULES[s["kind"]])]
 
 
 def apply(suggestion: dict[str, Any]) -> None:
     proposed = db.loads(suggestion["proposed"], {})
-    if suggestion["kind"] == "sensitive":
+    if suggestion["kind"] == "pii":
+        db.run("UPDATE question SET pii_kind=? WHERE id=?", proposed["pii_kind"], suggestion["target_id"])
+    elif suggestion["kind"] == "sensitive":
         db.run("UPDATE question SET required=? WHERE id=?", proposed["required"], suggestion["target_id"])
     elif suggestion["kind"] == "followup":
         db.run("UPDATE question SET is_followup=1, parent_qid=COALESCE(parent_qid, ?) WHERE id=?",

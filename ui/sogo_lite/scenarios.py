@@ -20,7 +20,7 @@ from typing import Any, Callable, Optional
 
 from sogo_lite import create_ai, db, engine, events, gateway, modules, seed, suggestions
 from sogo_lite.config import get_settings
-from sogo_lite.modules import quiz_scoring, shared_classes, tag_suggest
+from sogo_lite.modules import pii, quiz_scoring, shared_classes, tag_suggest
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +45,11 @@ INCOME = "What is your annual household income?"
 BRANCH = "Which branch did you visit?"
 REASON = "What is the main reason for your score?"
 ORDER_NO = "Please enter your order number"
+MOBILE = "What is your mobile number?"
+EMAIL_ME = "Please email me at jo.bloggs@example.com about my refund."
+GREAT = "Great service and friendly staff."
+# Scopes that are skipped while their module is off (see `_forced_modules`).
+SCOPE_MODULES = {"1 Shared classes": "shared_classes"}
 PROMPTS = [("See how staff feel about the new hybrid-work policy", "EX Project"),
            ("Feedback after a support call, with NPS", "CX Project"),
            ("Food-safety quiz with a pass mark", "Assessment"),
@@ -206,12 +211,14 @@ def s2_may_leave(col: str, ctx: Ctx) -> Outcome:
 
 
 def s2_module_off(col: str, ctx: Ctx) -> Outcome:
-    with modules.override({**{m: True for m in modules.MODULE_IDS}, "alert_meaning": False}):
+    with modules.override({"alert_meaning": False}):
         fired = _fired(_retail(9, LOVE_IT)) & MEANING_RULES
     return _check(not fired, f"with the module off, meaning rules fired: {sorted(fired) or 'none'}")
 
 
 def s2_webhook(col: str, ctx: Ctx) -> Outcome:
+    if not modules.is_on(shared_classes.MODULE):
+        return "na", "the clinic rule reads a shared class (response type); shared classes is off"
     rule = "Complaint: open a case"
     on_complaint = rule in _fired(_clinic(1, NURSE), "webhook")
     on_praise = rule in _fired(_clinic(5, PRAISE), "webhook")
@@ -254,7 +261,7 @@ def s2_anonymous(col: str, ctx: Ctx) -> Outcome:
 
 def s3_price(col: str, ctx: Ctx) -> Outcome:
     shown = [text for text in PRICE_ANSWERS if "q3" in engine.shown_qids(_retail(6, text))]
-    with modules.override({**{m: True for m in modules.MODULE_IDS}, "logic_text": False}):
+    with modules.override({"logic_text": False}):
         keyword = [text for text in PRICE_ANSWERS if "q3" in engine.shown_qids(_retail(6, text))]
     detail = f"pricing question shown for {len(shown)} of 3; with today's Contains \"price\" rule only: {len(keyword)}"
     if _works(col, "classify"):
@@ -347,7 +354,45 @@ def s5_order(col: str, ctx: Ctx) -> Outcome:
 
 def s5_one_call(col: str, ctx: Ctx) -> Outcome:
     calls = ctx.get("reason_calls")
-    return _check(calls == 1, f"gateway calls for one saved Text Box with modules 4 and 5 on: {calls}")
+    return _check(calls == 1, f"gateway calls for one saved Text Box with modules 4, 5 and 9 on: {calls}")
+
+
+# ── scopes 9 and 10: personal data ──────────────────────────────────────────
+
+def s9_mobile(col: str, ctx: Ctx) -> Outcome:
+    question = _save_question(ctx, "text", MOBILE)
+    hints = _pending(question["id"], "pii")
+    if _works(col, "classify"):
+        kinds = [db.loads(h["proposed"], {}).get("pii_kind") for h in hints]
+        return _check(kinds == ["contact"], f"personal data hints on \"{MOBILE}\": {kinds or 'none'}")
+    return _check(not hints, f"hints: {len(hints)}; the question was saved")
+
+
+def s9_branch(col: str, ctx: Ctx) -> Outcome:
+    question = _save_question(ctx, "radio", BRANCH, options=[("Downtown", 0), ("Riverside", 0)])
+    hints = _pending(question["id"], "pii")
+    return _check(not hints, f"personal data hints on \"{BRANCH}\": {len(hints)}")
+
+
+def s10_email(col: str, ctx: Ctx) -> Outcome:
+    response_id = _retail(8, EMAIL_ME)
+    flag = pii.flags(response_id).get("q2")
+    if _works(col, "classify"):
+        return _check(bool(flag) and flag["kind"] == "contact",
+                      f"flag on the comment: {flag['kind'] if flag else 'none'}")
+    return _check(not flag and _submitted(response_id), f"flag: {bool(flag)}; response submitted")
+
+
+def s10_plain(col: str, ctx: Ctx) -> Outcome:
+    response_id = _retail(10, GREAT)
+    flag = pii.flags(response_id).get("q2")
+    return _check(not flag, f"flag on \"{GREAT}\": {flag['kind'] if flag else 'none'}")
+
+
+def s10_offline(col: str, ctx: Ctx) -> Outcome:
+    response_id = _retail(8, EMAIL_ME, offline=True)
+    calls = [c for c in _calls(response_id) if c["module"] == pii.ANSWER_MODULE]
+    return _check(not calls and not pii.flags(response_id), f"personal data calls in Offline Mode: {len(calls)}")
 
 
 # ── scope 6: tag suggestions ────────────────────────────────────────────────
@@ -505,7 +550,7 @@ SCENARIOS: list[Scenario] = [
     Scenario("4d", "4 Sensitive hints", "A dismissed hint stays dismissed", s4_dismiss),
     Scenario("5a", "5 Follow-up flag", "\"What is the main reason for your score?\" is suggested", s5_reason),
     Scenario("5b", "5 Follow-up flag", "\"Please enter your order number\" is not", s5_order),
-    Scenario("5c", "5 Follow-up flag", "Modules 4 and 5 share one gateway call", s5_one_call),
+    Scenario("5c", "5 Follow-up flag", "Modules 4, 5 and 9 share one gateway call", s5_one_call),
     Scenario("6a", "6 Tag suggestions", "\"Grand – Downtown\" is suggested Downtown", s6_downtown),
     Scenario("6b", "6 Tag suggestions", "Room cleanliness → Housekeeping; breakfast → Restaurant", s6_questions),
     Scenario("6c", "6 Tag suggestions", "Nothing is applied until Accept", s6_not_applied),
@@ -517,6 +562,13 @@ SCENARIOS: list[Scenario] = [
     Scenario("8c", "8 Quiz scoring", "\"Keep it covered.\" → 0 of 3, Incorrect", _s8("incorrect", "incorrect", 0)),
     Scenario("8d", "8 Quiz scoring", "No suggested grade is final without a grader", s8_not_final),
     Scenario("8e", "8 Quiz scoring", "A job can be followed to done by polling", s8_jobs),
+    Scenario("9a", "9 Personal data asked", "\"What is your mobile number?\" gets a contact-details hint", s9_mobile),
+    Scenario("9b", "9 Personal data asked", "\"Which branch did you visit?\" gets none", s9_branch),
+    Scenario("10a", "10 Personal data in answers", "A comment with an email address is flagged at submit",
+             s10_email),
+    Scenario("10b", "10 Personal data in answers", "\"Great service and friendly staff.\" is not flagged",
+             s10_plain),
+    Scenario("10c", "10 Personal data in answers", "Offline Mode makes no gateway call", s10_offline),
 ]
 
 
@@ -548,13 +600,18 @@ def _latency(first: int, last: int) -> list[dict[str, Any]]:
     return out
 
 
+def _forced_modules() -> dict[str, bool]:
+    """Every module on for the run, except one that is off by default and still off."""
+    return {m: m not in modules.DEFAULT_OFF or modules.is_on(m) for m in modules.MODULE_IDS}
+
+
 def _run() -> None:
     run_id = STATE["run_id"]
     results: dict[str, dict[str, Any]] = {s.id: {} for s in SCENARIOS}
     latency: list[dict[str, Any]] = []
-    everything_on = {m: True for m in modules.MODULE_IDS}
+    forced = _forced_modules()
     try:
-        with modules.override(everything_on):
+        with modules.override(forced):
             for col, _, faults in COLUMNS:
                 with gateway.override_faults({}):
                     seed.sync_class_sets()
@@ -565,7 +622,10 @@ def _run() -> None:
                         STATE["current"] = f"{col}: {scenario.id} {scenario.title}"
                         first = _last_log_id()
                         try:
-                            status, detail = scenario.fn(col, ctx)
+                            if not forced.get(SCOPE_MODULES.get(scenario.scope, ""), True):
+                                status, detail = "na", "the module is switched off in Settings"
+                            else:
+                                status, detail = scenario.fn(col, ctx)
                         except Exception as exc:
                             logger.exception("Scenario %s failed in column %s", scenario.id, col)
                             status, detail = "fail", f"error: {exc!r}"

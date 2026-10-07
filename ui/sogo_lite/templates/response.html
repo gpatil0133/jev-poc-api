@@ -13,7 +13,7 @@
       {% set p = post.get(row.q.qid) %}
       <tr class="{{ 'dim' if not row.shown and not row.text }}">
         <td><code>{{ row.q.qid }}</code> {{ row.q.wording }}{% if not row.shown %} <span class="pill">not shown</span>{% endif %}</td>
-        <td>{{ row.text }}</td>
+        <td>{{ row.text }}{% if pii.get(row.q.qid) %} <span class="pill warn" title="confidence {{ '%.2f'|format(pii[row.q.qid].confidence or 0) }}">personal data: {{ PII_KINDS[pii[row.q.qid].kind]|lower }}</span>{% endif %}</td>
         <td>{% if row.q.type == 'text' and row.text %}
           <form method="post" action="/responses/{{ project.survey_no }}/r/{{ response.id }}/post-populate" class="row tight">
             <input type="hidden" name="qid" value="{{ row.q.qid }}">

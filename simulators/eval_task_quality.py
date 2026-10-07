@@ -1,12 +1,19 @@
-"""Scores a backend's answers against the hand-labelled set in task_eval_set.py:
-10 examples per task, one call each, through the gateway.
+"""Scores a backend's answers against the labelled sets in task_eval_set.py: 1,000
+texts, one call each through the gateway, every applicable question in that call.
 
     python -m simulators.eval_task_quality --base-url http://127.0.0.1:8010 --label jev
 
-Writes simulators/out/task_quality_{label}.csv (one row per example) and
-task_quality_{label}_summary.csv (one row per task).
+Run the gateway with CACHE_MAX_ENTRIES=0 so no answer is served from its cache:
+latency and token counts are then real, and --split-check compares fresh answers.
 
-What the platform does with an answer depends on its band, so each row is also
+Writes to simulators/out/:
+  task_quality_{label}.csv              one row per scored decision
+  task_quality_{label}_summary.csv      one row per question and tier
+  task_quality_{label}_calls.csv        one row per call: latency, tokens
+  task_quality_{label}_sets.csv         one row per set: latency, tokens, cost
+  task_quality_{label}_split_check.csv  with --split-check: questions asked alone vs together
+
+What the platform does with an answer depends on its band, so each decision is also
 sorted into an outcome:
   acted_right    band act, answer correct          (applied automatically, and right)
   acted_wrong    band act, answer wrong            (applied automatically, and wrong: the costly case)
@@ -17,20 +24,16 @@ sorted into an outcome:
 """
 from __future__ import annotations
 
-import re
+import math
 import time
-from typing import Any
+from typing import Any, Optional
 
-from simulators.common import base_parser, client, latency_summary, print_summary, write_csv
-from simulators.task_eval_set import TASKS
+from simulators.common import base_parser, client, latency_summary, write_csv
+from simulators.task_eval_set import NOTHING_DUE, SETS, TIERS, Check, Plan, grade_from_points, rows
 
 OUTCOMES = ["acted_right", "acted_wrong", "offered_right", "offered_wrong", "quiet_right", "missed"]
-# Nothing is due for these expected answers: staying quiet is the right result.
-NOTHING_DUE = {"no", "other", ""}
-
-
-def _label_slug(label: str) -> str:
-    return re.sub(r"[^A-Za-z0-9_\-]+", "_", label.strip()).strip("_") or "label"
+REQUEST_FIELDS = ("tasks", "questions", "survey_question", "metric_score", "context")
+PROGRESS_EVERY = 100
 
 
 def _outcome(band: str, correct: bool, due: bool) -> str:
@@ -41,73 +44,159 @@ def _outcome(band: str, correct: bool, due: bool) -> str:
     return "missed" if due else "quiet_right"
 
 
-def _score(task: dict[str, Any], example: dict[str, Any], answers: dict[str, dict]) -> dict[str, Any]:
-    answer_id = task["spec"]["id"] if task["spec"] else task["id"]
-    if task["kind"] == "labels":
-        expected = sorted(example["expected"])
-        per_label = {label: answers.get(f"{answer_id}.{_label_slug(label)}") or {} for label in task["spec"]["classes"]}
-        predicted = sorted(label for label, a in per_label.items() if a.get("label") == "yes")
-        bands = [a.get("band", "none") for label, a in per_label.items() if a.get("label") == "yes"]
-        band = "act" if "act" in bands else "suggest" if "suggest" in bands else "none"
-        right = sum(1 for label, a in per_label.items() if (a.get("label") == "yes") == (label in expected))
-        return {"expected": "; ".join(expected) or "(none)", "predicted": "; ".join(predicted) or "(none)",
-                "correct": predicted == expected, "band": band, "due": bool(expected),
-                "confidence": round(min((a.get("confidence") or 0.0) for a in per_label.values()), 3),
-                "label_decisions_right": right, "label_decisions": len(per_label)}
-    answer = answers.get(answer_id) or {}
-    expected = example["expected"]
-    predicted = answer.get("label")
-    return {"expected": expected, "predicted": predicted, "correct": predicted == expected,
-            "band": answer.get("band", "none"), "due": expected not in NOTHING_DUE,
-            "confidence": answer.get("confidence"),
-            "p_expected": (answer.get("probabilities") or {}).get(expected)}
-
-
-def _call(http, task: dict[str, Any], example: dict[str, Any], timeout_ms: int) -> dict[str, Any]:
-    body: dict[str, Any] = {"text": example["text"], "timeout_ms": timeout_ms}
-    if task["spec"]:
-        body["questions"] = [task["spec"]]
-    else:
-        body["tasks"] = [task["id"]]
-    for key in ("metric_score", "context"):
-        if key in example:
-            body[key] = example[key]
-    if task["survey_question"]:
-        body["survey_question"] = task["survey_question"]
-    row: dict[str, Any] = {"group": task["group"], "task": task["id"], "tricky": bool(example.get("tricky"))}
+def _post(http, text: str, fields: dict[str, Any], timeout_ms: int) -> dict[str, Any]:
+    """One classify call. Never raises: a failed call comes back as a fallback."""
+    body = {"text": text, "timeout_ms": timeout_ms, **{k: fields[k] for k in REQUEST_FIELDS if k in fields}}
     t0 = time.perf_counter()
-    resp = http.post("/v1/classify", json=body)
-    row["client_ms"] = round((time.perf_counter() - t0) * 1000.0, 1)
-    data = resp.json() if resp.status_code == 200 else {}
-    row.update(http_status=resp.status_code, fallback=data.get("fallback", True),
-               fallback_reason=data.get("fallback_reason") or (None if resp.status_code == 200 else resp.text[:120]),
-               model=data.get("model"))
-    scored = _score(task, example, data.get("answers") or {})
-    row.update(scored)
-    row["outcome"] = "no_answer" if row["fallback"] else _outcome(scored["band"], scored["correct"], scored["due"])
-    row["text"] = example["text"]
-    return row
+    try:
+        resp = http.post("/v1/classify", json=body)
+        status, data = resp.status_code, (resp.json() if resp.status_code == 200 else {})
+        error = None if status == 200 else resp.text[:160]
+    except Exception as exc:
+        status, data, error = 0, {}, f"{type(exc).__name__}: {exc}"[:160]
+    answers = data.get("answers") or {}
+    usage = data.get("usage") or {}
+    return {"client_ms": round((time.perf_counter() - t0) * 1000.0, 1), "http_status": status,
+            "fallback": data.get("fallback", True), "fallback_reason": data.get("fallback_reason") or error,
+            "gateway_ms": data.get("latency_ms"), "model": data.get("model"), "answers": answers,
+            "input_tokens": usage.get("input_tokens"), "output_tokens": usage.get("output_tokens"),
+            "cached_answers": sum(1 for a in answers.values() if a.get("cached"))}
 
 
-def _summarise(task: dict[str, Any], rows: list[dict[str, Any]], backend: str) -> dict[str, Any]:
-    n = len(rows)
-    correct = sum(1 for r in rows if r["correct"])
-    plain = [r for r in rows if not r["tricky"]]
-    tricky = [r for r in rows if r["tricky"]]
-    acted = [r for r in rows if r["band"] == "act" and not r["fallback"]]
+def _decide(check: Check, answers: dict[str, dict], fallback: bool) -> dict[str, Any]:
+    answer = answers.get(check["answer_id"]) or {}
+    predicted = answer.get("label")
+    correct = predicted in check["accept"]
+    due = check["expected"] not in NOTHING_DUE
+    band = answer.get("band", "none")
+    return {"question": check["question"], "item": check["item"], "expected": check["expected"],
+            "predicted": predicted, "correct": correct, "due": due, "band": band,
+            "confidence": answer.get("confidence"),
+            "p_expected": (answer.get("probabilities") or {}).get(check["expected"]),
+            "outcome": "no_answer" if fallback or predicted is None else _outcome(band, correct, due)}
+
+
+def _derived_grades(row: dict[str, Any], decisions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Quiz only: the grade each key-point wording implies, next to the model's own grade.
+    Key points cannot tell a wrong answer from a non-answer, so those two count as one."""
+    out = []
+    wanted = row["expected"]["grade"].replace("not_an_answer", "incorrect")
+    for source in ("quiz_key_points", "quiz_key_points_strict"):
+        mine = [d for d in decisions if d["question"] == source]
+        if not mine or any(d["outcome"] == "no_answer" for d in mine):
+            continue
+        implied = grade_from_points(sum(1 for d in mine if d["predicted"] == "yes"), len(mine))
+        out.append({"question": source.replace("quiz_key_points", "quiz_grade_from_points"), "item": "",
+                    "expected": wanted, "predicted": implied, "correct": implied == wanted,
+                    "due": wanted != "incorrect", "band": "", "confidence": None, "p_expected": None,
+                    "outcome": "derived"})
+    return out
+
+
+def _run_row(http, eval_set: dict[str, Any], row: dict[str, Any], plan: Plan,
+             timeout_ms: int) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    result = _post(http, row["text"], plan, timeout_ms)
+    answers = result.pop("answers")
+    decisions = [_decide(check, answers, result["fallback"]) for check in plan["checks"]]
+    if eval_set["id"] == "quiz":
+        decisions += _derived_grades(row, decisions)
+    base = {"set": eval_set["id"], "scope": eval_set["scope"], "id": row["id"], "tier": row["tier"]}
+    call = {**base, **result, "questions": len(plan["checks"]),
+            "all_correct": all(d["correct"] for d in decisions if d["outcome"] != "derived"), "text": row["text"]}
+    return call, [{**base, **d, "note": row.get("note", ""), "text": row["text"]} for d in decisions]
+
+
+def _split_check(http, row: dict[str, Any], plan: Plan, together: list[dict[str, Any]],
+                 timeout_ms: int) -> list[dict[str, Any]]:
+    """Ask each part of a combined call on its own and compare with the combined answers."""
+    out = []
+    for part, fields in plan["parts"].items():
+        alone = _post(http, row["text"], fields, timeout_ms)
+        part_ids = {q["id"] for q in fields["questions"]}
+        for check in plan["checks"]:
+            if check["answer_id"].split(".")[0] not in part_ids:
+                continue
+            solo = _decide(check, alone["answers"], alone["fallback"])
+            joint = next(d for d in together if d["question"] == check["question"] and d["item"] == check["item"])
+            gap = (abs(solo["p_expected"] - joint["p_expected"])
+                   if solo["p_expected"] is not None and joint["p_expected"] is not None else None)
+            out.append({"id": row["id"], "part": part, "question": check["question"], "item": check["item"],
+                        "expected": check["expected"], "together": joint["predicted"], "alone": solo["predicted"],
+                        "same_label": solo["predicted"] == joint["predicted"],
+                        "together_p_expected": joint["p_expected"], "alone_p_expected": solo["p_expected"],
+                        "p_gap": None if gap is None else round(gap, 4), "alone_client_ms": alone["client_ms"],
+                        "alone_input_tokens": alone["input_tokens"],
+                        "cached": bool(alone["cached_answers"])})
+    return out
+
+
+# ── summaries ───────────────────────────────────────────────────────────────
+
+def _pct(part: int, whole: int) -> Any:
+    return round(100.0 * part / whole, 1) if whole else ""
+
+
+def _margin(correct: int, n: int) -> Any:
+    """Half-width of a 95% Wilson interval, in points: how far the accuracy could be off."""
+    if not n:
+        return ""
+    z, p = 1.96, correct / n
+    return round(100.0 * z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / (1 + z * z / n), 1)
+
+
+def _question_summary(eval_set: dict[str, Any], question: str, tier: str,
+                      mine: list[dict[str, Any]]) -> dict[str, Any]:
+    n = len(mine)
+    correct = sum(1 for d in mine if d["correct"])
+    due = [d for d in mine if d["due"]]
+    quiet = [d for d in mine if not d["due"]]
+    texts: dict[str, bool] = {}
+    for d in mine:
+        texts[d["id"]] = texts.get(d["id"], True) and d["correct"]
+    acted = [d for d in mine if d["band"] == "act" and d["outcome"] not in ("no_answer", "derived")]
     summary: dict[str, Any] = {
-        "backend": backend, "group": task["group"], "task": task["id"], "kind": task["kind"], "use": task["use"],
-        "examples": n, "correct": correct, "accuracy_pct": round(100.0 * correct / n),
-        "plain_correct": f"{sum(1 for r in plain if r['correct'])}/{len(plain)}",
-        "tricky_correct": f"{sum(1 for r in tricky if r['correct'])}/{len(tricky)}",
-        "acted": len(acted), "acted_right": sum(1 for r in acted if r["correct"]),
+        "set": eval_set["id"], "scope": eval_set["scope"], "question": question, "tier": tier,
+        "decisions": n, "correct": correct, "accuracy_pct": _pct(correct, n), "margin_pts": _margin(correct, n),
+        "texts": len(texts), "texts_all_right": sum(texts.values()),
+        "due": len(due), "due_caught": sum(1 for d in due if d["correct"]),
+        "caught_pct": _pct(sum(1 for d in due if d["correct"]), len(due)),
+        "not_due": len(quiet), "false_alarms": sum(1 for d in quiet if not d["correct"]),
+        "acted": len(acted), "acted_right": sum(1 for d in acted if d["correct"]),
     }
-    summary.update({name: sum(1 for r in rows if r["outcome"] == name) for name in OUTCOMES + ["no_answer"]})
-    right_conf = [r["confidence"] for r in rows if r["correct"] and r["confidence"] is not None]
-    wrong_conf = [r["confidence"] for r in rows if not r["correct"] and r["confidence"] is not None]
-    summary["mean_confidence_right"] = round(sum(right_conf) / len(right_conf), 2) if right_conf else ""
-    summary["mean_confidence_wrong"] = round(sum(wrong_conf) / len(wrong_conf), 2) if wrong_conf else ""
-    summary["client_p50_ms"] = latency_summary([r["client_ms"] for r in rows])["p50_ms"]
+    summary.update({name: sum(1 for d in mine if d["outcome"] == name) for name in OUTCOMES + ["no_answer"]})
+    for name, pick in (("right", True), ("wrong", False)):
+        conf = [d["confidence"] for d in mine if d["correct"] is pick and d["confidence"] is not None]
+        summary[f"mean_confidence_{name}"] = round(sum(conf) / len(conf), 2) if conf else ""
+    return summary
+
+
+def _summarise(eval_set: dict[str, Any], decisions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    out = []
+    questions = list(dict.fromkeys(d["question"] for d in decisions))
+    for question in questions:
+        mine = [d for d in decisions if d["question"] == question]
+        out.append(_question_summary(eval_set, question, "all", mine))
+        out += [_question_summary(eval_set, question, tier, [d for d in mine if d["tier"] == tier])
+                for tier in TIERS if any(d["tier"] == tier for d in mine)]
+    return out
+
+
+def _set_summary(eval_set: dict[str, Any], calls: list[dict[str, Any]], backend: str,
+                 usd_per_mtok: Optional[float]) -> dict[str, Any]:
+    answered = [c for c in calls if not c["fallback"]]
+    tokens = [c["input_tokens"] for c in answered if c["input_tokens"] is not None]
+    summary = {"backend": backend, "set": eval_set["id"], "scope": eval_set["scope"], "use": eval_set["use"],
+               "calls": len(calls), "no_answer": len(calls) - len(answered),
+               "texts_all_right": sum(1 for c in calls if c["all_correct"]),
+               "questions_per_call": round(sum(c["questions"] for c in calls) / len(calls), 1),
+               **{f"client_{k}": v for k, v in latency_summary([c["client_ms"] for c in answered]).items()
+                  if k != "n"},
+               "input_tokens_mean": round(sum(tokens) / len(tokens)) if tokens else "",
+               "input_tokens_total": sum(tokens) if tokens else "",
+               "output_tokens_total": sum(c["output_tokens"] or 0 for c in answered) if tokens else ""}
+    if usd_per_mtok is not None and tokens:
+        summary["input_usd_total"] = round(sum(tokens) * usd_per_mtok / 1e6, 4)
+        summary["input_usd_per_1000_calls"] = round(sum(tokens) / len(tokens) * 1000 * usd_per_mtok / 1e6, 4)
     return summary
 
 
@@ -115,23 +204,70 @@ def main() -> None:
     parser = base_parser(__doc__.splitlines()[0])
     parser.add_argument("--label", required=True, help="name for the output files, such as jev or laya")
     parser.add_argument("--timeout-ms", type=int, default=20000)
+    parser.add_argument("--sets", default="", help="comma-separated set ids; default is every enabled set")
+    parser.add_argument("--include-disabled", action="store_true", help="also run the parked sets")
+    parser.add_argument("--limit", type=int, default=0, help="first N texts of each set (for a smoke run)")
+    parser.add_argument("--split-check", type=int, default=0,
+                        help="for N quiz texts, also ask each part alone and compare with the combined call")
+    parser.add_argument("--usd-per-mtok", type=float, default=None,
+                        help="price per million input tokens, to turn token counts into cost")
     args = parser.parse_args()
 
-    rows: list[dict[str, Any]] = []
+    wanted = {s.strip() for s in args.sets.split(",") if s.strip()}
+    chosen = [s for s in SETS if (s["id"] in wanted if wanted else s["enabled"] or args.include_disabled)]
+    calls: list[dict[str, Any]] = []
+    decisions: list[dict[str, Any]] = []
+    split: list[dict[str, Any]] = []
     summary: list[dict[str, Any]] = []
-    with client(args, timeout=args.timeout_ms / 1000.0 + 10) as http:
-        backend = http.get("/health").json().get("backend", "laya")
-        for task in TASKS:
-            mine = [_call(http, task, example, args.timeout_ms) for example in task["examples"]]
-            rows += mine
-            summary.append(_summarise(task, mine, backend))
-    calls_csv = write_csv(f"task_quality_{args.label}.csv", rows)
-    summary_csv = write_csv(f"task_quality_{args.label}_summary.csv", summary)
-    total = len(rows)
-    print_summary(f"Task quality: {args.label} ({args.base_url})", {
-        "backend": backend, "examples": total, "correct": sum(1 for r in rows if r["correct"]),
-        "no_answer": sum(1 for r in rows if r["fallback"]),
-        "acted_wrong": sum(1 for r in rows if r["outcome"] == "acted_wrong"), "summary": summary_csv}, calls_csv)
+    sets: list[dict[str, Any]] = []
+    backend = "unknown"
+    try:
+        with client(args, timeout=args.timeout_ms / 1000.0 + 10) as http:
+            backend = http.get("/health").json().get("backend", "laya")
+            for eval_set in chosen:
+                data = rows(eval_set["id"])[:args.limit or None]
+                every = max(1, len(data) // args.split_check) if args.split_check and eval_set["id"] == "quiz" else 0
+                set_calls: list[dict[str, Any]] = []
+                set_decisions: list[dict[str, Any]] = []
+                for index, row in enumerate(data):
+                    plan = eval_set["plan"](row)
+                    call, mine = _run_row(http, eval_set, row, plan, args.timeout_ms)
+                    set_calls.append(call)
+                    set_decisions += mine
+                    if every and index % every == 0 and len({s["id"] for s in split}) < args.split_check:
+                        split += _split_check(http, row, plan, mine, args.timeout_ms)
+                    if (len(calls) + len(set_calls)) % PROGRESS_EVERY == 0:
+                        print(f"  {len(calls) + len(set_calls)} calls done ({eval_set['id']})", flush=True)
+                calls += set_calls
+                decisions += set_decisions
+                summary += _summarise(eval_set, set_decisions)
+                sets.append(_set_summary(eval_set, set_calls, backend, args.usd_per_mtok))
+    finally:
+        # Whatever was collected is written, so a run that dies part-way still leaves its rows.
+        paths = [write_csv(f"task_quality_{args.label}{suffix}.csv", data) for suffix, data in
+                 (("", decisions), ("_summary", summary), ("_calls", calls), ("_sets", sets),
+                  ("_split_check", split)) if data]
+
+    answered = [c for c in calls if not c["fallback"]]
+    scored = [d for d in decisions if d["outcome"] != "derived"]
+    latency = latency_summary([c["client_ms"] for c in answered])
+    print(f"\n=== Task quality: {args.label} ({args.base_url}, backend {backend}) ===")
+    print(f"  calls {len(calls)}, no answer {len(calls) - len(answered)}, "
+          f"answers served from the gateway cache {sum(c['cached_answers'] for c in calls)}")
+    print(f"  decisions {len(scored)}, correct {sum(1 for d in scored if d['correct'])}, "
+          f"acted wrong {sum(1 for d in scored if d['outcome'] == 'acted_wrong')}")
+    print(f"  client latency p50 {latency['p50_ms']} ms, p95 {latency['p95_ms']} ms, max {latency['max_ms']} ms")
+    for line in summary:
+        if line["tier"] == "all":
+            print(f"  {line['set']:<12} {line['question']:<34} {line['correct']:>4}/{line['decisions']:<4} "
+                  f"{line['accuracy_pct']:>5}%  +/-{line['margin_pts']}")
+    if split:
+        same = sum(1 for s in split if s["same_label"])
+        print(f"  split check: {same}/{len(split)} decisions the same alone and together"
+              + ("; WARNING: some answers came from the cache, run the gateway with CACHE_MAX_ENTRIES=0"
+                 if any(s["cached"] for s in split) else ""))
+    for path in paths:
+        print(f"  output  {path}")
 
 
 if __name__ == "__main__":

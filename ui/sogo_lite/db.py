@@ -85,6 +85,9 @@ CREATE TABLE IF NOT EXISTS gateway_call_log(
     client_ms REAL, latency_ms REAL, backend_ms REAL, fallback INTEGER NOT NULL DEFAULT 0,
     fallback_reason TEXT, fault TEXT, question_hash TEXT, cached INTEGER NOT NULL DEFAULT 0,
     truncated INTEGER NOT NULL DEFAULT 0, outcome TEXT);
+CREATE TABLE IF NOT EXISTS pii_flag(
+    response_id INTEGER NOT NULL, qid TEXT NOT NULL, kind TEXT NOT NULL, confidence REAL,
+    band TEXT, log_id INTEGER, created_at TEXT NOT NULL, PRIMARY KEY(response_id, qid));
 CREATE TABLE IF NOT EXISTS setting(name TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS scenario_run(
     id INTEGER PRIMARY KEY, started_at TEXT, finished_at TEXT, results TEXT);
@@ -110,8 +113,15 @@ def conn() -> sqlite3.Connection:
     return c
 
 
+# Columns added after the first cut: (table, column, definition).
+ADDED_COLUMNS = [("question", "pii_kind", "TEXT")]
+
+
 def init() -> None:
     conn().executescript(SCHEMA)
+    for table, column, definition in ADDED_COLUMNS:
+        if column not in {r["name"] for r in rows(f"PRAGMA table_info({table})")}:
+            run(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
 
 
 def rows(sql: str, *args: Any) -> list[dict[str, Any]]:

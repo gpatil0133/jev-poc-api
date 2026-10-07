@@ -244,6 +244,7 @@ def health(force: bool = False) -> dict[str, Any]:
                  "loaded": [], "device": None, "tasks": None, "cache_entries": None}
     value["token"] = "missing" if not gateway_token() else auth_state["state"]
     value["base_url"] = get_settings().gateway_base_url
+    value["base_url_source"] = get_settings().gateway_url_source
     _health_cache.update(at=time.time(), value=value)
     return value
 

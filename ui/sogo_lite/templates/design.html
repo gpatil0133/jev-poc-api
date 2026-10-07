@@ -13,6 +13,7 @@
         <td>{{ QUESTION_TYPES[q.type] }}{% if q.type == 'metric' %} ({{ METRICS[q.metric_kind][0] }}){% endif %}</td>
         <td>
           {% if q.required != 'none' %}<span class="pill">{{ REQUIRED_MODES[q.required] }}</span>{% endif %}
+          {% if q.pii_kind and module_on('pii_question') %}<span class="pill warn">Personal data: {{ PII_KINDS[q.pii_kind]|lower }}</span>{% endif %}
           {% if q.is_followup %}<span class="pill">Follow-up{% if q.parent_qid %} of {{ q.parent_qid }}{% endif %}</span>{% endif %}
           {% if q.qid in class_sets and module_on('shared_classes') %}<span class="pill {{ 'warn' if class_sets[q.qid].dirty else 'ok' }}">Classes{{ ' (draft)' if class_sets[q.qid].dirty }}</span>{% endif %}
           {% if hints[q.id] %}<span class="pill band-suggest">{{ hints[q.id] }} hint{{ 's' if hints[q.id] > 1 }}</span>{% endif %}

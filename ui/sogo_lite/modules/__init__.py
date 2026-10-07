@@ -1,4 +1,5 @@
-"""The eight Design scopes as switchable modules (plan section 4.1).
+"""The Design scopes as switchable modules (plan section 4.1): the eight from the
+scope page, plus two for personal data (9 and 10).
 
 A module registers event handlers and extension points when it is imported. Turning
 it off stops its handlers and hides its panels; its stored data stays.
@@ -29,9 +30,16 @@ MODULES: list[dict[str, str]] = [
      "where": "Create with AI"},
     {"id": "quiz_scoring", "n": "8", "name": "Open-ended quiz scoring",
      "where": "Assign Scores, grading list"},
+    {"id": "pii_question", "n": "9", "name": "Builder hints for questions that ask for personal data",
+     "where": "Design → question editor"},
+    {"id": "pii_answer", "n": "10", "name": "Personal data in text answers",
+     "where": "Responses → individual response"},
 ]
 MODULE_IDS = [m["id"] for m in MODULES]
 MODULE_NAMES = {m["id"]: m["name"] for m in MODULES}
+# Off until someone switches them on in Settings. Shared classes is parked for now:
+# scopes 2 and 3 keep working on the classes their own rule editors add.
+DEFAULT_OFF = {"shared_classes"}
 
 # The scenario runner switches modules for one run without touching the saved toggles.
 _override: ContextVar[Optional[dict[str, bool]]] = ContextVar("module_override", default=None)
@@ -41,7 +49,7 @@ def is_on(module_id: str) -> bool:
     forced = _override.get()
     if forced is not None and module_id in forced:
         return forced[module_id]
-    return db.get_setting(f"module.{module_id}", "1") == "1"
+    return db.get_setting(f"module.{module_id}", "0" if module_id in DEFAULT_OFF else "1") == "1"
 
 
 def set_on(module_id: str, on: bool) -> None:
@@ -54,7 +62,8 @@ def states() -> dict[str, bool]:
 
 @contextmanager
 def override(forced: dict[str, bool]) -> Iterator[None]:
-    token = _override.set(forced)
+    """Nested overrides add to the one already in force."""
+    token = _override.set({**(_override.get() or {}), **forced})
     try:
         yield
     finally:
@@ -64,5 +73,5 @@ def override(forced: dict[str, bool]) -> Iterator[None]:
 def load() -> None:
     """Import every module so it can subscribe to events."""
     for name in ("shared_classes", "alert_meaning", "logic_text", "design_hints",
-                 "tag_suggest", "template_pick", "quiz_scoring"):
+                 "tag_suggest", "template_pick", "quiz_scoring", "pii"):
         importlib.import_module(f"sogo_lite.modules.{name}")

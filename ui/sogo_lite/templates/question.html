@@ -8,6 +8,9 @@
     <label>Wording <input name="wording" value="{{ question.wording }}" required></label>
     <div class="row">
       <label>Response <select name="required">{% for k, v in REQUIRED_MODES.items() %}<option value="{{ k }}" {{ 'selected' if question.required == k }}>{{ v }}</option>{% endfor %}</select></label>
+      {% if module_on('pii_question') %}
+      <label>Personal data <select name="pii_kind"><option value="">not personal data</option>{% for k, v in PII_KINDS.items() %}<option value="{{ k }}" {{ 'selected' if question.pii_kind == k }}>{{ v }}</option>{% endfor %}</select></label>
+      {% endif %}
       {% if question.type == 'metric' %}
       <label>Metric <select name="metric_kind">{% for k, v in METRICS.items() %}<option value="{{ k }}" {{ 'selected' if question.metric_kind == k }}>{{ v[0] }} ({{ v[1] }}–{{ v[2] }})</option>{% endfor %}</select></label>
       {% endif %}

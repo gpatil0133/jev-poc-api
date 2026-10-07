@@ -1,0 +1,128 @@
+{
+  "q01": {
+    "question": "How should raw chicken be stored in the fridge, and why?",
+    "key_points": [
+      "bottom shelf",
+      "below ready-to-eat food",
+      "stops juices dripping"
+    ]
+  },
+  "q02": {
+    "question": "What should you do when you hear the fire alarm?",
+    "key_points": [
+      "leave by the nearest exit",
+      "do not use the lifts",
+      "go to the assembly point",
+      "do not stop to collect belongings"
+    ]
+  },
+  "q03": {
+    "question": "A customer emails asking for a copy of all the personal data we hold on them. What do you do?",
+    "key_points": [
+      "verify the customer's identity",
+      "pass the request to the data protection team",
+      "respond within one month"
+    ]
+  },
+  "q04": {
+    "question": "How do you treat a minor burn?",
+    "key_points": [
+      "cool it under running water",
+      "for at least 20 minutes",
+      "cover loosely with cling film or a clean dressing",
+      "do not apply ice or creams"
+    ]
+  },
+  "q05": {
+    "question": "A customer complains that their order arrived damaged. What steps do you take?",
+    "key_points": [
+      "apologise",
+      "ask for the order number",
+      "offer a replacement or refund",
+      "log the complaint"
+    ]
+  },
+  "q06": {
+    "question": "Explain why the Moon shows phases.",
+    "key_points": [
+      "the Moon orbits the Earth",
+      "half of the Moon is always lit by the Sun",
+      "we see different amounts of the lit half"
+    ]
+  },
+  "q07": {
+    "question": "What should staff do to keep their account passwords secure?",
+    "key_points": [
+      "at least 12 characters",
+      "a different password for every account",
+      "use a password manager",
+      "turn on two-factor authentication",
+      "never share the password"
+    ]
+  },
+  "q08": {
+    "question": "When must you wash your hands while working in the kitchen?",
+    "key_points": [
+      "before handling food",
+      "after touching raw meat",
+      "after using the toilet",
+      "after handling waste"
+    ]
+  },
+  "q09": {
+    "question": "A customer hands you a banknote you think is fake. What do you do?",
+    "key_points": [
+      "do not accept the note",
+      "call a supervisor",
+      "do not accuse the customer"
+    ]
+  },
+  "q10": {
+    "question": "Describe the safe way to lift a heavy box.",
+    "key_points": [
+      "bend your knees",
+      "keep your back straight",
+      "hold the load close to your body",
+      "do not twist while lifting"
+    ]
+  },
+  "q11": {
+    "question": "What happens to the price of a product when demand rises and supply stays the same, and why?",
+    "key_points": [
+      "the price rises",
+      "more buyers compete for the same quantity"
+    ]
+  },
+  "q12": {
+    "question": "How can you tell that an email might be a phishing attempt?",
+    "key_points": [
+      "the sender's address does not match the organisation",
+      "urgent or threatening tone",
+      "asks for passwords or payment details",
+      "the link goes to a different address than shown"
+    ]
+  },
+  "q13": {
+    "question": "A customer tells you they have a nut allergy. What must you do before serving them?",
+    "key_points": [
+      "check the allergen information",
+      "tell the kitchen",
+      "use clean equipment"
+    ]
+  },
+  "q14": {
+    "question": "Under our returns policy, when can a customer get a full refund?",
+    "key_points": [
+      "within 30 days of purchase",
+      "with proof of purchase",
+      "the item is unused"
+    ]
+  },
+  "q15": {
+    "question": "What does the heart do, and where does blood pick up oxygen?",
+    "key_points": [
+      "pumps blood around the body",
+      "blood picks up oxygen in the lungs"
+    ]
+  }
+}

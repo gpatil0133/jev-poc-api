@@ -1,0 +1,66 @@
+{
+  "hotel_location": {
+    "name": "Location",
+    "kind": "option",
+    "tags": ["Downtown", "Airport", "Riverside", "Beachfront"],
+    "survey_question": "Which of our hotels did you stay at?"
+  },
+  "store_region": {
+    "name": "Store Region",
+    "kind": "option",
+    "tags": ["Northeast", "Southeast", "Midwest", "Southwest", "West Coast", "Mountain West", "Canada", "Online Store"],
+    "survey_question": "Which store did you visit most recently?"
+  },
+  "product_department": {
+    "name": "Department",
+    "kind": "option",
+    "tags": ["Womenswear", "Menswear", "Childrenswear", "Footwear", "Beauty", "Home Furnishings", "Kitchenware", "Electronics", "Toys", "Sports & Outdoors", "Garden", "Books & Stationery"],
+    "survey_question": "Which department did you shop in today?"
+  },
+  "product_type": {
+    "name": "Product Type",
+    "kind": "option",
+    "tags": ["Smartphone", "Tablet", "Laptop", "Desktop Computer", "Monitor", "Television", "Headphones", "Speaker", "Smartwatch", "Camera", "Printer", "Games Console", "Router", "Keyboard", "Mouse", "Sofa", "Bed", "Mattress", "Wardrobe", "Dining Table", "Office Chair", "Desk", "Bookcase", "Lamp", "Rug"],
+    "survey_question": "Which product did you buy?"
+  },
+  "furniture_products": {
+    "name": "Product",
+    "kind": "option",
+    "tags": [
+      "Leather Sofa", "Fabric Sofa", "Sofa Bed", "Corner Sofa", "Loveseat", "Armchair", "Recliner", "Footstool", "Bean Bag", "Chaise Longue",
+      "Coffee Table", "Side Table", "Console Table", "Dining Table", "Extending Dining Table", "Dining Chair", "Bar Stool", "Bench", "Sideboard", "Display Cabinet",
+      "TV Stand", "Bookcase", "Floating Shelf", "Shoe Rack", "Coat Stand",
+      "Single Bed", "Double Bed", "King Size Bed", "Bunk Bed", "Ottoman Bed", "Day Bed", "Cot", "Memory Foam Mattress", "Pocket Sprung Mattress", "Mattress Topper", "Headboard",
+      "Bedside Table", "Chest of Drawers", "Wardrobe", "Sliding Door Wardrobe", "Dressing Table", "Blanket Box",
+      "Office Desk", "Standing Desk", "Office Chair", "Gaming Chair", "Filing Cabinet",
+      "Floor Lamp", "Table Lamp", "Ceiling Light", "Wall Mirror", "Floor Mirror", "Rug", "Curtains", "Cushion",
+      "Garden Table", "Garden Chair", "Sun Lounger", "Parasol", "Garden Bench"
+    ],
+    "survey_question": "Which item did you order?"
+  },
+  "hotel_departments": {
+    "name": "Hotel Department",
+    "kind": "question",
+    "tags": ["Front Desk", "Housekeeping", "Restaurant", "Spa & Wellness", "Maintenance"]
+  },
+  "journey_stages": {
+    "name": "Customer Journey Stage",
+    "kind": "question",
+    "tags": ["Discovery", "Purchase", "Delivery", "Onboarding", "Support", "Renewal"]
+  },
+  "engagement_drivers": {
+    "name": "Engagement Driver",
+    "kind": "question",
+    "tags": ["Leadership", "Pay & Benefits", "Workload", "Career Growth", "Recognition", "Teamwork", "Tools & Resources", "Diversity & Inclusion"]
+  },
+  "patient_themes": {
+    "name": "Patient Experience Theme",
+    "kind": "question",
+    "tags": ["Wait Times", "Staff Courtesy", "Doctor Communication", "Cleanliness", "Pain Management", "Discharge Planning", "Appointment Booking", "Billing", "Food", "Privacy", "Medication", "Parking"]
+  },
+  "product_feedback_themes": {
+    "name": "Product Feedback Theme",
+    "kind": "question",
+    "tags": ["Ease of Use", "Speed", "Reliability", "Visual Design", "Pricing", "Feature Requests", "Onboarding", "Documentation", "Customer Support", "Integrations", "Security", "Mobile App", "Reporting", "Notifications", "Search", "Accessibility", "Billing", "Customisation", "Collaboration", "Data Import"]
+  }
+}

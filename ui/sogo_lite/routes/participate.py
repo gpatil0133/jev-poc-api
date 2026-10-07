@@ -9,7 +9,7 @@ from fastapi.responses import HTMLResponse
 from starlette.datastructures import FormData
 
 from sogo_lite import db, engine, events, modules
-from sogo_lite.modules import quiz_scoring, shared_classes
+from sogo_lite.modules import pii, quiz_scoring, shared_classes
 from sogo_lite.web import form_data, project_or_404, redirect, render, to_float
 
 router = APIRouter()
@@ -117,6 +117,7 @@ def response_detail(request: Request, survey_no: int, response_id: int) -> HTMLR
               for q in questions],
         score=score, available=available, post=engine.post_populated(response_id),
         notes=db.loads(resp["notes"], []), sinks=sinks, classifications=shared_classes.results_for(response_id),
+        pii=pii.flags(response_id) if modules.is_on(pii.ANSWER_MODULE) else {},
         calls=db.val("SELECT COUNT(*) FROM gateway_call_log WHERE response_id=?", response_id))
 
 

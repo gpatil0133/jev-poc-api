@@ -1,8 +1,8 @@
-"""The eight scope modules against a fake gateway: plumbing and fallbacks, not accuracy."""
+"""The scope modules against a fake gateway: plumbing and fallbacks, not accuracy."""
 from tests.helpers import calls, fresh
 
 from sogo_lite import create_ai, db, engine, events, gateway, modules, seed, suggestions
-from sogo_lite.modules import quiz_scoring, shared_classes, tag_suggest
+from sogo_lite.modules import pii, quiz_scoring, shared_classes, tag_suggest
 
 SOFA = "The sofa arrived two weeks late and the driver left it outside in the rain."
 RETAIL = {"q1": 9, "q2": "Love it, but if prices go up again I'm switching.", "q3": "About right",
@@ -20,6 +20,11 @@ def _save(survey_no: int, qtype: str, wording: str, **kwargs) -> dict:
     return engine.question(question_id)
 
 
+def _class_calls(**where) -> list[dict]:
+    """Calls for the class set of a question; the personal-data check at submit is its own call."""
+    return [c for c in calls(**where) if c["module"] != pii.ANSWER_MODULE]
+
+
 def _pending(question_id: int) -> list[str]:
     return [s["kind"] for s in db.rows(
         "SELECT kind FROM suggestion WHERE target_id=? AND target_type='question' AND status='pending'", question_id)]
@@ -29,14 +34,14 @@ def test_one_classification_is_shared_by_the_branch_and_the_alerts():
     fake = fresh()
     fake.yes = ["may_leave", "about_delivery"]
     response_id = engine.take(seed.RETAIL, RETAIL)
-    assert len(calls(endpoint="/v1/classify")) == 1, \
-        f"Expected one classify call but got {len(calls(endpoint='/v1/classify'))}"
+    assert len(_class_calls(endpoint="/v1/classify")) == 1, \
+        f"Expected one classify call but got {len(_class_calls(endpoint='/v1/classify'))}"
     # The comment contains "price", so today's Contains rule shows q3 either way; q4 needs the classifier.
     assert "q4" in engine.shown_qids(response_id), "\"answer is about delivery\" should show the follow-up"
     assert _fired(response_id) == {"Promoter may leave"}, f"Got {_fired(response_id)}"
     email = db.one("SELECT payload FROM sink_log WHERE response_id=?", response_id)["payload"]
     assert "matched 0.92" in email, f"The email should show the match but got {email}"
-    sent = db.loads(calls()[0]["request"])
+    sent = db.loads(_class_calls()[0]["request"])
     assert sent["metric_score"] == 9 and sent["question_id"] == "q2", f"Got {sent}"
 
 
@@ -58,7 +63,7 @@ def test_gateway_down_takes_the_default_path_and_score_rules_still_fire():
     assert _fired(response_id) == {"Detractor score"}, f"Got {_fired(response_id)}"
     notes = db.loads(engine.response(response_id)["notes"])
     assert any(n["kind"] == "check skipped" for n in notes), f"Skipped checks should be recorded: {notes}"
-    submit_calls = calls(trigger="response.submitted")
+    submit_calls = _class_calls(trigger="response.submitted")
     assert len(submit_calls) == 1, f"One attempt per question at submit, not one per rule: {len(submit_calls)}"
 
 
@@ -75,9 +80,9 @@ def test_offline_mode_and_module_off_make_no_call():
     fake.yes = ["may_leave", "about_delivery"]
     offline = engine.take(seed.RETAIL, RETAIL, offline=True)
     assert not calls() and "q4" not in engine.shown_qids(offline), "Offline Mode must not call the gateway"
-    with modules.override({"logic_text": False, "alert_meaning": False}):
+    with modules.override({"logic_text": False, "alert_meaning": False, "pii_answer": False}):
         off = engine.take(seed.RETAIL, RETAIL)
-    assert not calls() and not _fired(off), "With both modules off nothing should be classified"
+    assert not calls() and not _fired(off), "With the answer-level modules off nothing should be classified"
 
 
 def test_builder_hints_share_one_call_and_stay_dismissed():
@@ -87,8 +92,8 @@ def test_builder_hints_share_one_call_and_stay_dismissed():
     _save(survey_no, "metric", "How likely are you to recommend us?")
     reason = _save(survey_no, "text", "What is the main reason for your score?", required="mandatory")
     assert sorted(_pending(reason["id"])) == ["followup", "sensitive"], f"Got {_pending(reason['id'])}"
-    mine = calls(module="sensitive_hint+followup_flag")
-    assert len(mine) == 1, f"Modules 4 and 5 should share one call but made {len(mine)}"
+    mine = calls(module="sensitive_hint+pii_question+followup_flag")
+    assert len(mine) == 1, f"Modules 4, 5 and 9 should share one call but made {len(mine)}"
     assert set(db.loads(mine[0]["request"])) <= {"text", "questions", "context", "timeout_ms"}
 
     hint = db.one("SELECT id FROM suggestion WHERE target_id=? AND kind='sensitive'", reason["id"])
@@ -103,6 +108,55 @@ def test_builder_hints_share_one_call_and_stay_dismissed():
     suggestions.accept(follow["id"])
     accepted = engine.question(reason["id"])
     assert accepted["is_followup"] == 1 and accepted["parent_qid"] == "q1", f"Got {accepted}"
+
+
+def test_personal_data_hint_names_the_kind_and_waits_for_accept():
+    fake = fresh()
+    fake.pick["pii_q"] = "contact"
+    survey_no = engine.create_project("Personal data", "CX Project")
+    mobile = _save(survey_no, "text", "What is your mobile number?")
+    hint = db.one("SELECT * FROM suggestion WHERE target_id=? AND kind='pii'", mobile["id"])
+    assert hint and db.loads(hint["proposed"]) == {"pii_kind": "contact"}, f"Got {hint}"
+    assert engine.question(mobile["id"])["pii_kind"] is None, "Nothing is applied before the author accepts"
+    suggestions.accept(hint["id"])
+    assert engine.question(mobile["id"])["pii_kind"] == "contact"
+    events.emit("question.saved", question=engine.question(mobile["id"]))
+    assert "pii" not in _pending(mobile["id"]), "A question already marked gets no second hint"
+
+    fake.pick.clear()
+    branch = _save(survey_no, "text", "Which branch did you visit?")
+    assert "pii" not in _pending(branch["id"]), f"Got {_pending(branch['id'])}"
+
+
+def test_personal_data_in_an_answer_is_flagged_at_submit():
+    fake = fresh()
+    fake.pick["pii_a"] = "contact"
+    flagged = engine.take(seed.RETAIL, RETAIL)
+    assert pii.flags(flagged)["q2"]["kind"] == "contact", f"Got {pii.flags(flagged)}"
+    mine = calls(module="pii_answer")
+    assert len(mine) == 1 and mine[0]["response_id"] == flagged, f"One call for the one text answer: {len(mine)}"
+
+    offline = engine.take(seed.RETAIL, RETAIL, offline=True)
+    assert not pii.flags(offline) and len(calls(module="pii_answer")) == 1, "Offline Mode must not call the gateway"
+    with gateway.override_faults({"lowconf": "all"}):
+        unsure = engine.take(seed.RETAIL, RETAIL)
+    assert not pii.flags(unsure), "An unsure answer is not flagged"
+    fake.fallback = True
+    down = engine.take(seed.RETAIL, RETAIL)
+    notes = db.loads(engine.response(down)["notes"], [])
+    assert not pii.flags(down) and any("personal data" in n["what"] for n in notes), f"Got {notes}"
+
+
+def test_shared_classes_off_keeps_the_meaning_alerts_and_parks_the_shared_ones():
+    fake = fresh()
+    fake.yes = ["may_leave"]
+    fake.pick["comment.response_type"] = "complaint"
+    with modules.override({"shared_classes": False}):
+        retail = engine.take(seed.RETAIL, RETAIL)
+        clinic = engine.take(seed.CLINIC, {"q1": 1, "q2": "The nurse was rude.", "q3": "An apology.", "q4": "No"})
+    assert "Promoter may leave" in _fired(retail), f"Scope 2 must not depend on the switch: {_fired(retail)}"
+    assert not _fired(clinic), f"Rules on the shared classes are parked: {_fired(clinic)}"
+    assert not calls(response_id=clinic, module="alert_meaning"), "A class set nobody can read is not classified"
 
 
 def test_tag_suggestions_shortlist_a_large_category_and_wait_for_accept():

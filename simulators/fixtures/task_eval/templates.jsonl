@@ -1,0 +1,100 @@
+{"id": "templates-001", "text": "Poll to pick the date for the AGM", "tier": "easy", "expected": "Poll"}
+{"id": "templates-002", "text": "Till procedures knowledge check for new starters", "tier": "hard", "expected": "Assessment", "note": "About employees, but it tests what they know rather than how they feel."}
+{"id": "templates-003", "text": "diversity and inclusion survey for colleagues accross all sites", "tier": "medium", "expected": "EX Project"}
+{"id": "templates-004", "text": "Customer service team morale check", "tier": "hard", "expected": "EX Project", "note": "'Customer service' names the team; the subject is how those staff feel."}
+{"id": "templates-005", "text": "How did the new starters find their first 90 days?", "tier": "hard", "expected": "EX Project", "note": "Never says employee, but new starters are staff giving feedback on their onboarding."}
+{"id": "templates-006", "text": "manager effectiveness - have each team rate their line manager on communication and support", "tier": "medium", "expected": "EX Project"}
+{"id": "templates-007", "text": "staff wellbeing check in, short, monthly, 5 qs max", "tier": "medium", "expected": "EX Project"}
+{"id": "templates-008", "text": "live audience vote during the keynote - which topic should we cover next, 4 choices", "tier": "medium", "expected": "Poll"}
+{"id": "templates-009", "text": "Pre-course test to see what learners already know about spreadsheets, then the same test after so we can compare scores.", "tier": "medium", "expected": "Assessment"}
+{"id": "templates-010", "text": "Pulse: is the hybrid arrangement working for the team?", "tier": "hard", "expected": "EX Project", "note": "Short like a poll, but a pulse on working arrangements is employee feedback."}
+{"id": "templates-011", "text": "which mascot should we go with?? options are fox, owl, otter", "tier": "medium", "expected": "Poll"}
+{"id": "templates-012", "text": "One question after live chat: how easy was it to get your issue sorted?", "tier": "hard", "expected": "CX Project", "note": "A single question, but it is a customer effort score after a support contact, not a vote between options."}
+{"id": "templates-013", "text": "360 review for supervisors - peers, reports and their own manager all feed in", "tier": "hard", "expected": "EX Project", "note": "360 feedback is staff giving feedback about staff."}
+{"id": "templates-014", "text": "After someone calls our helpdesk send them 3 quick questions on how well the agent solved the problem.", "tier": "medium", "expected": "CX Project"}
+{"id": "templates-015", "text": "feedback form for guests checking out of the hotel, room, breakfast, staff etc", "tier": "medium", "expected": "CX Project"}
+{"id": "templates-016", "text": "Diner comment card for the table, 4 questions", "tier": "hard", "expected": "CX Project", "note": "No customer-feedback keywords, but a comment card collects diners' feedback on their meal and service."}
+{"id": "templates-017", "text": "Encuesta sobre hábitos de lectura en adultos", "tier": "hard", "expected": "Survey", "note": "Spanish: 'Survey on reading habits in adults' - a general research questionnaire."}
+{"id": "templates-018", "text": "brand awareness study for a new oat drink, target ppl aged 18-34", "tier": "medium", "expected": "Survey"}
+{"id": "templates-019", "text": "Multiple-choice exam on company products", "tier": "easy", "expected": "Assessment"}
+{"id": "templates-020", "text": "Im doing my dissertation on remote learning, need a questionnaire for other students", "tier": "medium", "expected": "Survey"}
+{"id": "templates-021", "text": "Anti-bribery compliance: staff must score 70% to be certified", "tier": "hard", "expected": "Assessment", "note": "A staff audience, but a required score for certification makes it a test."}
+{"id": "templates-022", "text": "Customer satisfaction survey after purchase", "tier": "easy", "expected": "CX Project"}
+{"id": "templates-023", "text": "Enquête de satisfaction client après un achat en ligne", "tier": "hard", "expected": "CX Project", "note": "French: 'Customer satisfaction survey after an online purchase'."}
+{"id": "templates-024", "text": "We moved offices last month. Need to hear from employees about the new space. Cover the commute and desk booking too.", "tier": "medium", "expected": "EX Project"}
+{"id": "templates-025", "text": "Single question poll: which day suits you best?", "tier": "easy", "expected": "Poll"}
+{"id": "templates-026", "text": "Market research study on streaming habits", "tier": "easy", "expected": "Survey"}
+{"id": "templates-027", "text": "want to know how our people feel about workload and work-life balance, anonymous, quarterly", "tier": "medium", "expected": "EX Project"}
+{"id": "templates-028", "text": "members to vote yes/no on raising the annual fee", "tier": "medium", "expected": "Poll"}
+{"id": "templates-029", "text": "CSAT for support tickets", "tier": "easy", "expected": "CX Project"}
+{"id": "templates-030", "text": "just need people to pick between tuesday or thursday for the webinar, nothing else", "tier": "medium", "expected": "Poll"}
+{"id": "templates-031", "text": "Which snacks do people prefer? Full study with segments by age and region", "tier": "hard", "expected": "Survey", "note": "Opens like a poll, but a segmented multi-question study is market research."}
+{"id": "templates-032", "text": "One-question vote on the new team name", "tier": "easy", "expected": "Poll"}
+{"id": "templates-033", "text": "Why are clients cancelling? Questionnaire for people who closed their account", "tier": "hard", "expected": "CX Project", "note": "Never says satisfaction, but it is feedback from customers about the service they left."}
+{"id": "templates-034", "text": "Feedback from candidates we interviewed", "tier": "hard", "expected": "Survey", "note": "Candidates are neither customers nor employees, so it falls to the general type."}
+{"id": "templates-035", "text": "Screening test for job applicants - numeracy and logic, with a cut-off score", "tier": "hard", "expected": "Assessment", "note": "Applicants are tested against a cut-off score; it is not feedback from them."}
+{"id": "templates-036", "text": "Workplace culture survey for all staff", "tier": "easy", "expected": "EX Project"}
+{"id": "templates-037", "text": "Employee feedback on the new remote work policy", "tier": "easy", "expected": "EX Project"}
+{"id": "templates-038", "text": "certification for forklift operators - written part, pass or fail", "tier": "medium", "expected": "Assessment"}
+{"id": "templates-039", "text": "let the book club choose next months read from a shortlist of five", "tier": "medium", "expected": "Poll"}
+{"id": "templates-040", "text": "Teachers' views on the new marking policy", "tier": "hard", "expected": "EX Project", "note": "School setting and the word 'marking', but it is staff feedback on a workplace policy, not a test."}
+{"id": "templates-041", "text": "Spelling test with 20 questions, auto scored", "tier": "easy", "expected": "Assessment"}
+{"id": "templates-042", "text": "need a questionnaire for parents about school meal options and after-school clubs, around 15 questions", "tier": "medium", "expected": "Survey"}
+{"id": "templates-043", "text": "Staff friendliness - what do our guests think?", "tier": "hard", "expected": "CX Project", "note": "Mentions staff, but the respondents are guests rating the service."}
+{"id": "templates-044", "text": "Test two subject lines with our panel - which one would you open?", "tier": "hard", "expected": "Poll", "note": "'Test' here means comparing two options; respondents simply pick one."}
+{"id": "templates-045", "text": "Show of hands: should the quiz night move to Wednesdays?", "tier": "hard", "expected": "Poll", "note": "Mentions a quiz, but the request is a single yes/no vote."}
+{"id": "templates-046", "text": "Maths test for year 7 students", "tier": "easy", "expected": "Assessment"}
+{"id": "templates-047", "text": "How did patients find their stay with us? Send after they leave the ward", "tier": "hard", "expected": "CX Project", "note": "Patients are the users of the service, so this is feedback on a service received."}
+{"id": "templates-048", "text": "End-of-module evaluation for students to fill in", "tier": "hard", "expected": "Survey", "note": "Students rate the teaching; nothing is marked right or wrong, and they are not customers of a purchase or staff."}
+{"id": "templates-049", "text": "Verifica di storia per la terza media, con punteggio", "tier": "hard", "expected": "Assessment", "note": "Italian: 'History test for the third year of middle school, with scoring'."}
+{"id": "templates-050", "text": "Research study: how do small business owners score their own financial confidence?", "tier": "hard", "expected": "Survey", "note": "'Score' is a self-rating in a research study; there are no right answers or pass mark."}
+{"id": "templates-051", "text": "New hire onboarding feedback survey", "tier": "easy", "expected": "EX Project"}
+{"id": "templates-052", "text": "Customer service skills exam for call-centre agents", "tier": "hard", "expected": "Assessment", "note": "'Customer service' is the subject of the exam; it is not customer feedback."}
+{"id": "templates-053", "text": "Score our service desk: 1-5 stars after each resolved customer ticket", "tier": "hard", "expected": "CX Project", "note": "'Score' is a star rating of a support contact, not a test with right answers."}
+{"id": "templates-054", "text": "want to ask shoppers how their in-store visit went and whether theyd recommend us", "tier": "medium", "expected": "CX Project"}
+{"id": "templates-055", "text": "Personality questionnaire - which type of traveller are you? No right or wrong answers", "tier": "hard", "expected": "Survey", "note": "Quiz-like in style, but it explicitly has no right or wrong answers, so it is not an assessment."}
+{"id": "templates-056", "text": "need to check that people actually understood the GDPR training - 10 questions, must get 8 right", "tier": "medium", "expected": "Assessment"}
+{"id": "templates-057", "text": "Product knowledge quiz for sales reps", "tier": "easy", "expected": "Assessment"}
+{"id": "templates-058", "text": "Thumbs up or thumbs down on the proposed opening hours. One question, results shown straight away.", "tier": "medium", "expected": "Poll"}
+{"id": "templates-059", "text": "exit interview questionnaire for leavers", "tier": "easy", "expected": "EX Project"}
+{"id": "templates-060", "text": "General research questionnaire on commuting habits", "tier": "easy", "expected": "Survey"}
+{"id": "templates-061", "text": "returns experience - how easy was it for the customer to send an item back?", "tier": "medium", "expected": "CX Project"}
+{"id": "templates-062", "text": "Vote for your favourite cover design", "tier": "easy", "expected": "Poll"}
+{"id": "templates-063", "text": "Employee engagement survey", "tier": "easy", "expected": "EX Project"}
+{"id": "templates-064", "text": "We just launched a subscription box. Need to know what buyers think of the first delivery and the unboxing.", "tier": "medium", "expected": "CX Project"}
+{"id": "templates-065", "text": "customer effort score survey", "tier": "easy", "expected": "CX Project"}
+{"id": "templates-066", "text": "Stay interviews for our top performers", "tier": "hard", "expected": "EX Project", "note": "A stay interview asks current employees how they feel about staying."}
+{"id": "templates-067", "text": "Staff satisfaction survey for our company", "tier": "easy", "expected": "EX Project"}
+{"id": "templates-068", "text": "Employee of the month - colleagues cast one vote each", "tier": "hard", "expected": "Poll", "note": "Staff are voting for one option, not giving workplace feedback."}
+{"id": "templates-069", "text": "Questionnaire on residents' views of the new cycle lanes", "tier": "easy", "expected": "Survey"}
+{"id": "templates-070", "text": "post-installation follow up for broadband clients - was the engineer on time, is it working", "tier": "medium", "expected": "CX Project"}
+{"id": "templates-071", "text": "Let employees pick the venue for the summer away day", "tier": "hard", "expected": "Poll", "note": "About employees, but it is a vote between options rather than feedback on how they feel."}
+{"id": "templates-072", "text": "Academic research survey on sleep and screen time", "tier": "easy", "expected": "Survey"}
+{"id": "templates-073", "text": "We're a charity and want to learn what the general public thinks about food waste. About 10 questions.", "tier": "medium", "expected": "Survey"}
+{"id": "templates-074", "text": "event registraton form with dietary needs and session choices", "tier": "medium", "expected": "Survey"}
+{"id": "templates-075", "text": "trivia quiz for our pub night with a leaderboard and points per correct answer", "tier": "medium", "expected": "Assessment"}
+{"id": "templates-076", "text": "Survey about how people use public libraries", "tier": "easy", "expected": "Survey"}
+{"id": "templates-077", "text": "NPS survey for our customers", "tier": "easy", "expected": "CX Project"}
+{"id": "templates-078", "text": "Quick vote between three slogan options", "tier": "easy", "expected": "Poll"}
+{"id": "templates-079", "text": "feedback from our nurses on shift patterns and rota fairness", "tier": "medium", "expected": "EX Project"}
+{"id": "templates-080", "text": "Phishing awareness: show staff 10 emails and mark whether they spot the fakes", "tier": "hard", "expected": "Assessment", "note": "Each answer is marked correct or not, so it is a test despite the staff audience."}
+{"id": "templates-081", "text": "community needs survey for our neighbourhood", "tier": "easy", "expected": "Survey"}
+{"id": "templates-082", "text": "driving theory practice paper, multiple choise, show the correct answers at the end", "tier": "medium", "expected": "Assessment"}
+{"id": "templates-083", "text": "Demographic profile of our mailing list - age, region, interests, that kind of thing", "tier": "medium", "expected": "Survey"}
+{"id": "templates-084", "text": "Public attitudes to the four-day working week, national sample", "tier": "hard", "expected": "Survey", "note": "The topic is work, but the audience is the general public, not the author's own staff."}
+{"id": "templates-085", "text": "Members' feedback on gym facilities and classes", "tier": "hard", "expected": "CX Project", "note": "Paying members are the gym's customers giving feedback on the service."}
+{"id": "templates-086", "text": "Election for student council president - one ballot question", "tier": "hard", "expected": "Poll", "note": "An election ballot with one question is a vote between candidates."}
+{"id": "templates-087", "text": "Yearly census of where our graduates ended up working", "tier": "hard", "expected": "Survey", "note": "A fact-finding study of alumni; they are neither customers giving feedback nor current staff."}
+{"id": "templates-088", "text": "Packaging A or packaging B - ask our customers to choose", "tier": "hard", "expected": "Poll", "note": "Customers are the audience, but it is a single choice between two options, not feedback on an experience."}
+{"id": "templates-089", "text": "Survey the class on chapter 4 - each question has one correct answer and I need grades", "tier": "hard", "expected": "Assessment", "note": "Called a survey, but correct answers and grades make it a test."}
+{"id": "templates-090", "text": "Quick poll: pizza or tacos for Friday lunch?", "tier": "easy", "expected": "Poll"}
+{"id": "templates-091", "text": "Fire safety quiz with a pass mark of 80%", "tier": "easy", "expected": "Assessment"}
+{"id": "templates-092", "text": "Customers choose our next ice-cream flavour from 3 options", "tier": "hard", "expected": "Poll", "note": "A vote between three options; nothing is being rated or reviewed."}
+{"id": "templates-093", "text": "Post-delivery feedback from customers", "tier": "easy", "expected": "CX Project"}
+{"id": "templates-094", "text": "Customer feedback on our new mobile app", "tier": "easy", "expected": "CX Project"}
+{"id": "templates-095", "text": "Do our customers know how to use the product? 8 right-or-wrong questions with a score at the end", "tier": "hard", "expected": "Assessment", "note": "The audience is customers, but right-or-wrong questions with a score make it a test, not feedback."}
+{"id": "templates-096", "text": "Final exam for the first aid course", "tier": "easy", "expected": "Assessment"}
+{"id": "templates-097", "text": "Votação rápida: qual cor para o novo uniforme?", "tier": "hard", "expected": "Poll", "note": "Portuguese: 'Quick vote: which colour for the new uniform?'."}
+{"id": "templates-098", "text": "Mitarbeiterbefragung zur Zufriedenheit am Arbeitsplatz", "tier": "hard", "expected": "EX Project", "note": "German: 'Employee survey on satisfaction in the workplace'."}
+{"id": "templates-099", "text": "vocab check for my Spanish class, 15 words, graded", "tier": "medium", "expected": "Assessment"}
+{"id": "templates-100", "text": "Canteen satisfaction for warehouse workers", "tier": "hard", "expected": "EX Project", "note": "'Satisfaction' sounds like CX, but the respondents are staff rating a workplace facility."}

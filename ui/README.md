@@ -15,7 +15,7 @@ From the repo root, in PowerShell:
 
 ```powershell
 .venv\Scripts\python -m pip install -r ui\requirements.txt
-$env:SOGO_LITE_GATEWAY_TOKEN = "<gateway JWT>"     # a corp_no when the gateway runs with DEV_AUTH_BYPASS
+.venv\Scripts\python -m uvicorn app.api.main:app --port 8010     # the gateway, in its own shell
 cd ui
 ..\.venv\Scripts\python -m uvicorn sogo_lite.app:app --port 8020
 ```
@@ -23,16 +23,24 @@ cd ui
 Open http://127.0.0.1:8020. The first start creates `ui/data/sogo_lite.db` and seeds
 six example projects.
 
+The mock reads the repo's `.env`, the same file the gateway reads. Set
+`SOGO_LITE_GATEWAY_TOKEN` there (a gateway JWT, or a corp_no when the gateway runs
+with `DEV_AUTH_BYPASS=true`). By default it calls the gateway on
+`http://127.0.0.1:8010`, so the model behind it is whichever `BACKEND` that gateway
+was started with (`laya` or `jev`). To use a gateway on another machine, set
+`SOGO_LITE_GATEWAY_URL`. A variable set in the shell wins over `.env`, and both are
+read at start-up, so restart the gateway and the mock after a change. The Settings
+page shows the address in use and the backend the gateway reports.
+
 | Setting | Where | Default |
 |---|---|---|
-| Gateway base URL | `ui/config.json`, or `SOGO_LITE_GATEWAY_URL` | `http://192.168.0.171:8010` |
-| Gateway token | `SOGO_LITE_GATEWAY_TOKEN`, environment only | none: every call falls back with `no_token` |
+| Gateway base URL | `SOGO_LITE_GATEWAY_URL` in `.env` or the shell, else `gateway_base_url` in `ui/config.json` | `http://127.0.0.1:8010` |
+| Gateway token | `SOGO_LITE_GATEWAY_TOKEN` in `.env` or the shell | none: every call falls back with `no_token` |
 | Timeouts per call type | `ui/config.json` | respondent 300 ms, submit 2,000, author 1,500, batch 30,000 |
-| Database file | `ui/config.json`, or `SOGO_LITE_DB` | `ui/data/sogo_lite.db` |
-| Module toggles, fault switches | Settings page (stored in the database) | all modules on, all faults off |
+| Database file | `SOGO_LITE_DB` in `.env` or the shell, else `ui/config.json` | `ui/data/sogo_lite.db` |
+| Module toggles, fault switches | Settings page (stored in the database) | all modules on except shared classes (scope 1), all faults off |
 
-The token is read from the environment and is never written to a file, the
-database or the call log.
+The token is never written to the config file, the database or the call log.
 
 To try it without the GPU box, run the gateway on the stub model from the repo root
 and point the mock at it. The stub's answers are a hash of the input and mean nothing.
@@ -58,11 +66,24 @@ Tests need neither: `..\.venv\Scripts\python -m pytest tests/` from `ui/`.
 | Assign Scores | Points per option; model answer and key points for open-ended questions (scope 8) |
 | Rules & Alerts | Rules with conditions and actions; "the comment means…" (scope 2) |
 | Participate | The live survey page, with an Offline Mode switch |
-| Responses | Individual Responses, Post-Population fields, the grading list (scope 8) |
+| Responses | Individual Responses, Post-Population fields, the grading list (scope 8), personal-data flags on answers (scope 10) |
 | Outbox & logs | The three local sinks: email outbox, webhook log, Salesforce log |
 | Inspector | Every gateway call: request, answers, bands, latency, flags, outcome. Also a side panel |
 | Scenarios | Runs every acceptance check in four columns and exports the matrix |
 | Settings | Gateway status, test call, module toggles, fault switches, restore seed data |
+
+Two modules are not on the scope page and were added for the PoC. Scope 9 hints
+in the question editor when a question asks for personal data (name, contact
+details, an ID number and so on) and offers to mark it; it rides in the same call
+as the scope 4 and 5 hints. Scope 10 checks each text answer at submit and flags
+the response when it contains personal data. Scope 10 sends the answer itself to
+the gateway, so with an external backend the personal data leaves the network.
+
+Shared classes (scope 1) is off by default. Scopes 2 and 3 do not depend on the
+switch: they keep using the question's class set for the meanings and topics their
+own rule editors add. While it is off the Classes tab is hidden and rules that
+read a shared class (sentiment, response type, or a class written on the Classes
+tab) count as not met, which parks both rules of project 9002.
 
 With every module switched off the mock behaves like today's product and never
 calls the gateway.
@@ -72,7 +93,7 @@ calls the gateway.
 | No. | Project | Exercises |
 |---|---|---|
 | 9001 | Retail feedback (CX) | Scopes 2, 3 |
-| 9002 | Clinic visit (CX) | Scopes 1, 2 |
+| 9002 | Clinic visit (CX) | Scope 1 (its rules read shared classes, so they are parked while scope 1 is off) |
 | 9003 | Hotel stay (CX) | Scope 6 |
 | 9004 | Staff pulse (EX, Anonymous) | Scopes 2 (anonymity), 4 |
 | 9005 | Food-safety quiz (Assessment) | Scope 8 |
@@ -90,8 +111,9 @@ at the top of `sogo_lite/seed.py` before the first start.
 
 "Run all scenarios" replays the scope page's examples through the same code path
 as the live pages, once per column: normal, gateway down, slow gateway (2,500 ms)
-and forced low confidence. The saved module toggles and fault switches are not
-touched. A full run takes a few minutes because the slow column waits out the
+and forced low confidence. Every module is on for the run, except shared classes
+while it is off in Settings: its checks then show as not applicable. The saved
+module toggles and fault switches are not touched. A full run takes a few minutes because the slow column waits out the
 timeouts.
 
 - A failed check under **Normal** means the scope does not work as described.
@@ -146,14 +168,14 @@ repo is the gateway, so most are answered by its code:
 
 ```
 ui/
-  config.json            gateway URL, timeouts, database path
+  config.json            timeouts, database path
   sogo_lite/
     app.py               FastAPI app and start-up
     config.py, db.py     settings; SQLite schema and helpers
     gateway.py           the gateway client: fallback contract, fault switches, call log
     events.py            platform events
     engine.py            baseline platform: questions, Logic, Tags, scores, alerts, the survey flow
-    modules/             one file per scope (4 and 5 share design_hints.py)
+    modules/             one file per scope (4, 5 and 9 share design_hints.py; pii.py holds 9 and 10)
     create_ai.py         Create with AI stub
     seed.py              the six seeded projects and their responses
     scenarios.py         the acceptance checks and the runner

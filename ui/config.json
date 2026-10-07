@@ -1,5 +1,4 @@
 {
-  "gateway_base_url": "http://192.168.0.171:8010",
   "db_path": "data/sogo_lite.db",
   "http_margin_ms": 250,
   "timeouts_ms": {
