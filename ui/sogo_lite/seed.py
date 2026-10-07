@@ -281,7 +281,7 @@ def reseed() -> None:
     """Drop everything except the settings and seed again."""
     tables = [r["name"] for r in db.rows("SELECT name FROM sqlite_master WHERE type='table'")]
     for table in tables:
-        if table != "setting":
+        if table not in ("setting", "eval_run"):
             db.run(f"DELETE FROM {table}")
     seed_if_empty()
 

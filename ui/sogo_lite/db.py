@@ -91,6 +91,8 @@ CREATE TABLE IF NOT EXISTS pii_flag(
 CREATE TABLE IF NOT EXISTS setting(name TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS scenario_run(
     id INTEGER PRIMARY KEY, started_at TEXT, finished_at TEXT, results TEXT);
+CREATE TABLE IF NOT EXISTS eval_run(
+    id INTEGER PRIMARY KEY, started_at TEXT, finished_at TEXT, config TEXT, results TEXT, error TEXT);
 """
 
 _local = threading.local()

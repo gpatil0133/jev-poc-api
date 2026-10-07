@@ -58,11 +58,11 @@
     });
   }
 
-  // Scenario run progress.
+  // Scenario and evaluation run progress.
   var progress = document.getElementById("run-progress");
   if (progress && progress.getAttribute("data-running") === "1") {
     var timer = setInterval(function () {
-      fetch("/api/scenarios/status").then(function (r) { return r.json(); }).then(function (s) {
+      fetch(progress.getAttribute("data-status") || "/api/scenarios/status").then(function (r) { return r.json(); }).then(function (s) {
         progress.querySelector("progress").max = s.total || 1;
         progress.querySelector("progress").value = s.done;
         document.getElementById("run-count").textContent = s.done + " of " + s.total;

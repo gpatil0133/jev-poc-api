@@ -3,6 +3,8 @@ texts, one call each through the gateway, every applicable question in that call
 
     python -m simulators.eval_task_quality --base-url http://127.0.0.1:8010 --label jev
 
+The Sogo-lite mock runs the same code from its Evaluation page (ui/sogo_lite/evaluation.py).
+
 Run the gateway with CACHE_MAX_ENTRIES=0 so no answer is served from its cache:
 latency and token counts are then real, and --split-check compares fresh answers.
 
@@ -26,7 +28,8 @@ from __future__ import annotations
 
 import math
 import time
-from typing import Any, Optional
+from pathlib import Path
+from typing import Any, Callable, Optional
 
 from simulators.common import base_parser, client, latency_summary, write_csv
 from simulators.task_eval_set import NOTHING_DUE, SETS, TIERS, Check, Plan, grade_from_points, rows
@@ -200,13 +203,107 @@ def _set_summary(eval_set: dict[str, Any], calls: list[dict[str, Any]], backend:
     return summary
 
 
+# ── running ─────────────────────────────────────────────────────────────────
+
+# Output files, by the key of the result they hold.
+OUTPUTS = {"decisions": "", "summary": "_summary", "calls": "_calls", "sets": "_sets", "split": "_split_check"}
+
+
+def sample(data: list[dict[str, Any]], count: Optional[int]) -> list[dict[str, Any]]:
+    """`count` texts spread over a set, or all of it when `count` is None. Each tier
+    keeps its share and the picks are evenly spaced within a tier, so a small run is
+    not all easy texts. The same count always picks the same texts."""
+    if count is None or count >= len(data):
+        return list(data)
+    if count <= 0:
+        return []
+    by_tier = {tier: [i for i, row in enumerate(data) if row["tier"] == tier] for tier in TIERS}
+    share = {tier: count * len(indices) / len(data) for tier, indices in by_tier.items()}
+    take = {tier: int(value) for tier, value in share.items()}
+    for tier in sorted(share, key=lambda t: share[t] - take[t], reverse=True)[:count - sum(take.values())]:
+        take[tier] += 1
+    picked = sorted(indices[k * len(indices) // take[tier]]
+                    for tier, indices in by_tier.items() for k in range(take[tier]))
+    return [data[i] for i in picked]
+
+
+def new_result() -> dict[str, Any]:
+    return {"backend": "unknown", "stopped": False, "decisions": [], "summary": [], "calls": [], "sets": [],
+            "split": []}
+
+
+def run(http, chosen: list[tuple[dict[str, Any], list[dict[str, Any]]]], result: dict[str, Any], *,
+        timeout_ms: int = 20000, split_check: int = 0, usd_per_mtok: Optional[float] = None,
+        progress: Optional[Callable[[int, int, str], None]] = None,
+        stop: Optional[Callable[[], bool]] = None) -> dict[str, Any]:
+    """Run the chosen (set, texts) pairs and fill `result` as it goes, so a caller
+    that is interrupted still holds the rows collected so far. `progress` is called
+    after every call with (done, total, set id); `stop` is asked before every call."""
+    total = sum(len(data) for _, data in chosen)
+    done = 0
+    result["backend"] = http.get("/health").json().get("backend", "laya")
+    for eval_set, data in chosen:
+        every = max(1, len(data) // split_check) if split_check and eval_set["id"] == "quiz" else 0
+        set_calls: list[dict[str, Any]] = []
+        set_decisions: list[dict[str, Any]] = []
+        for index, row in enumerate(data):
+            if stop is not None and stop():
+                result["stopped"] = True
+                break
+            plan = eval_set["plan"](row)
+            call, mine = _run_row(http, eval_set, row, plan, timeout_ms)
+            set_calls.append(call)
+            set_decisions += mine
+            result["calls"].append(call)
+            result["decisions"] += mine
+            if every and index % every == 0 and len({s["id"] for s in result["split"]}) < split_check:
+                result["split"] += _split_check(http, row, plan, mine, timeout_ms)
+            done += 1
+            if progress is not None:
+                progress(done, total, eval_set["id"])
+        if set_calls:
+            result["summary"] += _summarise(eval_set, set_decisions)
+            result["sets"].append(_set_summary(eval_set, set_calls, result["backend"], usd_per_mtok))
+        if result["stopped"]:
+            break
+    return result
+
+
+def headline(result: dict[str, Any]) -> dict[str, Any]:
+    """The few figures that describe a whole run."""
+    calls = result["calls"]
+    answered = [c for c in calls if not c["fallback"]]
+    scored = [d for d in result["decisions"] if d["outcome"] != "derived"]
+    correct = sum(1 for d in scored if d["correct"])
+    tokens = [c["input_tokens"] for c in answered if c["input_tokens"] is not None]
+    latency = latency_summary([c["client_ms"] for c in answered])
+    split = result["split"]
+    return {"backend": result["backend"], "stopped": result["stopped"], "calls": len(calls),
+            "no_answer": len(calls) - len(answered),
+            "cached_answers": sum(c["cached_answers"] for c in calls),
+            "texts_all_right": sum(1 for c in calls if c["all_correct"]),
+            "decisions": len(scored), "correct": correct, "accuracy_pct": _pct(correct, len(scored)),
+            "acted": sum(1 for d in scored if d["outcome"] in ("acted_right", "acted_wrong")),
+            "acted_wrong": sum(1 for d in scored if d["outcome"] == "acted_wrong"),
+            "p50_ms": latency["p50_ms"], "p95_ms": latency["p95_ms"], "max_ms": latency["max_ms"],
+            "input_tokens_total": sum(tokens), "input_tokens_mean": round(sum(tokens) / len(tokens)) if tokens else 0,
+            "split_decisions": len(split), "split_same": sum(1 for s in split if s["same_label"]),
+            "split_cached": any(s["cached"] for s in split)}
+
+
+def write_outputs(result: dict[str, Any], label: str, out_dir: Optional[Path] = None) -> list[Path]:
+    return [write_csv(f"task_quality_{label}{suffix}.csv", result[key], out_dir)
+            for key, suffix in OUTPUTS.items() if result[key]]
+
+
 def main() -> None:
     parser = base_parser(__doc__.splitlines()[0])
     parser.add_argument("--label", required=True, help="name for the output files, such as jev or laya")
     parser.add_argument("--timeout-ms", type=int, default=20000)
     parser.add_argument("--sets", default="", help="comma-separated set ids; default is every enabled set")
     parser.add_argument("--include-disabled", action="store_true", help="also run the parked sets")
-    parser.add_argument("--limit", type=int, default=0, help="first N texts of each set (for a smoke run)")
+    parser.add_argument("--limit", type=int, default=0,
+                        help="N texts of each set, spread over the tiers; default is every text")
     parser.add_argument("--split-check", type=int, default=0,
                         help="for N quiz texts, also ask each part alone and compare with the combined call")
     parser.add_argument("--usd-per-mtok", type=float, default=None,
@@ -214,58 +311,36 @@ def main() -> None:
     args = parser.parse_args()
 
     wanted = {s.strip() for s in args.sets.split(",") if s.strip()}
-    chosen = [s for s in SETS if (s["id"] in wanted if wanted else s["enabled"] or args.include_disabled)]
-    calls: list[dict[str, Any]] = []
-    decisions: list[dict[str, Any]] = []
-    split: list[dict[str, Any]] = []
-    summary: list[dict[str, Any]] = []
-    sets: list[dict[str, Any]] = []
-    backend = "unknown"
+    chosen = [(s, sample(rows(s["id"]), args.limit or None)) for s in SETS
+              if (s["id"] in wanted if wanted else s["enabled"] or args.include_disabled)]
+
+    def _progress(done: int, total: int, set_id: str) -> None:
+        if done % PROGRESS_EVERY == 0:
+            print(f"  {done} of {total} calls done ({set_id})", flush=True)
+
+    result = new_result()
     try:
         with client(args, timeout=args.timeout_ms / 1000.0 + 10) as http:
-            backend = http.get("/health").json().get("backend", "laya")
-            for eval_set in chosen:
-                data = rows(eval_set["id"])[:args.limit or None]
-                every = max(1, len(data) // args.split_check) if args.split_check and eval_set["id"] == "quiz" else 0
-                set_calls: list[dict[str, Any]] = []
-                set_decisions: list[dict[str, Any]] = []
-                for index, row in enumerate(data):
-                    plan = eval_set["plan"](row)
-                    call, mine = _run_row(http, eval_set, row, plan, args.timeout_ms)
-                    set_calls.append(call)
-                    set_decisions += mine
-                    if every and index % every == 0 and len({s["id"] for s in split}) < args.split_check:
-                        split += _split_check(http, row, plan, mine, args.timeout_ms)
-                    if (len(calls) + len(set_calls)) % PROGRESS_EVERY == 0:
-                        print(f"  {len(calls) + len(set_calls)} calls done ({eval_set['id']})", flush=True)
-                calls += set_calls
-                decisions += set_decisions
-                summary += _summarise(eval_set, set_decisions)
-                sets.append(_set_summary(eval_set, set_calls, backend, args.usd_per_mtok))
+            run(http, chosen, result, timeout_ms=args.timeout_ms, split_check=args.split_check,
+                usd_per_mtok=args.usd_per_mtok, progress=_progress)
     finally:
         # Whatever was collected is written, so a run that dies part-way still leaves its rows.
-        paths = [write_csv(f"task_quality_{args.label}{suffix}.csv", data) for suffix, data in
-                 (("", decisions), ("_summary", summary), ("_calls", calls), ("_sets", sets),
-                  ("_split_check", split)) if data]
+        paths = write_outputs(result, args.label)
 
-    answered = [c for c in calls if not c["fallback"]]
-    scored = [d for d in decisions if d["outcome"] != "derived"]
-    latency = latency_summary([c["client_ms"] for c in answered])
-    print(f"\n=== Task quality: {args.label} ({args.base_url}, backend {backend}) ===")
-    print(f"  calls {len(calls)}, no answer {len(calls) - len(answered)}, "
-          f"answers served from the gateway cache {sum(c['cached_answers'] for c in calls)}")
-    print(f"  decisions {len(scored)}, correct {sum(1 for d in scored if d['correct'])}, "
-          f"acted wrong {sum(1 for d in scored if d['outcome'] == 'acted_wrong')}")
-    print(f"  client latency p50 {latency['p50_ms']} ms, p95 {latency['p95_ms']} ms, max {latency['max_ms']} ms")
-    for line in summary:
+    top = headline(result)
+    print(f"\n=== Task quality: {args.label} ({args.base_url}, backend {top['backend']}) ===")
+    print(f"  calls {top['calls']}, no answer {top['no_answer']}, "
+          f"answers served from the gateway cache {top['cached_answers']}")
+    print(f"  decisions {top['decisions']}, correct {top['correct']}, acted wrong {top['acted_wrong']}")
+    print(f"  client latency p50 {top['p50_ms']} ms, p95 {top['p95_ms']} ms, max {top['max_ms']} ms")
+    for line in result["summary"]:
         if line["tier"] == "all":
             print(f"  {line['set']:<12} {line['question']:<34} {line['correct']:>4}/{line['decisions']:<4} "
                   f"{line['accuracy_pct']:>5}%  +/-{line['margin_pts']}")
-    if split:
-        same = sum(1 for s in split if s["same_label"])
-        print(f"  split check: {same}/{len(split)} decisions the same alone and together"
+    if top["split_decisions"]:
+        print(f"  split check: {top['split_same']}/{top['split_decisions']} decisions the same alone and together"
               + ("; WARNING: some answers came from the cache, run the gateway with CACHE_MAX_ENTRIES=0"
-                 if any(s["cached"] for s in split) else ""))
+                 if top["split_cached"] else ""))
     for path in paths:
         print(f"  output  {path}")
 

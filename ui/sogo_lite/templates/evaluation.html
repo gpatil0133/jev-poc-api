@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Evaluation{% endblock %}
+{% block content %}
+<h1>Evaluation</h1>
+<p class="muted">Sends labelled texts to the gateway, one call per text, and scores the answers. The texts are invented and each carries every question that applies to it. It uses the gateway and token on the <a href="/settings">Settings</a> page{% if health.reachable %}; that gateway's backend is <strong>{{ health.backend }}</strong>{% endif %}. With an external backend every call is billed.</p>
+
+<section class="card">
+  <h2>New run</h2>
+  <p>Fill every set with: {% for n in presets %}<a href="/evaluation?n={{ n }}">{{ n }} texts</a> · {% endfor %}<a href="/evaluation">all texts</a></p>
+  <form method="post" action="/evaluation/run" class="stack" data-confirm="Start the run? Each text is one call to the gateway.">
+    <table>
+      <thead><tr><th>Set</th><th>Scope</th><th>What it checks</th><th>Available</th><th>Texts to send</th></tr></thead>
+      <tbody>{% for s in sets %}
+        <tr class="{{ 'dim' if not s.enabled }}">
+          <td><code>{{ s.id }}</code>{% if not s.enabled %} <span class="pill">parked</span>{% endif %}</td>
+          <td>{{ s.scope }}</td><td>{{ s.use }}</td>
+          <td>{{ s.texts }} <span class="muted">({% for tier, count in s.tiers.items() if count %}{{ count }} {{ tier }}{{ ', ' if not loop.last }}{% endfor %})</span></td>
+          <td><input type="number" name="n_{{ s.id }}" min="0" max="{{ s.texts }}" value="{{ defaults[s.id] }}" aria-label="Texts to send for {{ s.id }}"></td>
+        </tr>
+      {% endfor %}</tbody>
+    </table>
+    <p class="muted">A number below the full set takes the same share of easy, medium and hard texts as the full set, and the same number always picks the same texts. Zero skips the set. Parked sets are not part of the 1,000 and start at zero.</p>
+    <div class="row">
+      <label>Price per million input tokens, USD (optional) <input name="usd_per_mtok" size="6" placeholder="e.g. 0.50"></label>
+      <label>Alone-versus-together check on <input type="number" name="split_check" min="0" max="{{ max_split }}" value="0" size="3"> quiz answers</label>
+      <button {{ 'disabled' if state.running }}>Start run</button>
+    </div>
+    <p class="muted">The alone-versus-together check sends three more calls per quiz answer to confirm the model answers a question the same way whether or not other questions ride in the call. It only means something when the gateway's cache is off.</p>
+  </form>
+</section>
+
+<div id="run-progress" data-running="{{ '1' if state.running else '0' }}" data-status="/api/evaluation/status" {{ 'hidden' if not state.running }}>
+  <progress max="{{ state.total or 1 }}" value="{{ state.done }}"></progress>
+  <p class="muted"><span id="run-count">{{ state.done }} of {{ state.total }}</span> calls · <span id="run-current">{{ state.current }}</span></p>
+  <form method="post" action="/evaluation/stop"><button class="ghost" {{ 'disabled' if state.stopping }}>Stop after this call</button></form>
+</div>
+
+{% if run %}
+{% set h = run.results.headline %}
+<section class="card">
+  <h2>Run #{{ run.id }} <small>started {{ run.started_at }} · finished {{ run.finished_at }}</small></h2>
+  {% if run.error %}<p><span class="pill warn">Problem</span> {{ run.error }}</p>{% endif %}
+  {% if h %}
+  {% if h.stopped %}<p><span class="pill warn">Stopped early</span> The figures cover the calls made before it stopped.</p>{% endif %}
+  <dl class="facts">
+    <dt>Backend</dt><dd><strong>{{ h.backend }}</strong></dd>
+    <dt>Calls</dt><dd>{{ h.calls }}{% if h.no_answer %} · <span class="pill warn">{{ h.no_answer }} with no answer</span>{% endif %}</dd>
+    <dt>Decisions right</dt><dd><strong>{{ h.correct }} of {{ h.decisions }}</strong> ({{ h.accuracy_pct }}%) · every question right on {{ h.texts_all_right }} of {{ h.calls }} texts</dd>
+    <dt>Acted on and wrong</dt><dd>{{ h.acted_wrong }} of {{ h.acted }} answers the platform would apply on its own</dd>
+    <dt>Time per call</dt><dd>median {{ h.p50_ms }} ms · 95th percentile {{ h.p95_ms }} ms · slowest {{ h.max_ms }} ms</dd>
+    <dt>Input tokens</dt><dd>{% if h.input_tokens_total %}{{ '{:,}'.format(h.input_tokens_total) }} in total · {{ h.input_tokens_mean }} per call{% else %}<span class="muted">not reported by this backend</span>{% endif %}</dd>
+    {% if h.split_decisions %}<dt>Alone versus together</dt><dd>{{ h.split_same }} of {{ h.split_decisions }} decisions the same{% if h.split_cached %} · <span class="pill warn">answers came from the cache, so this check proves nothing</span>{% endif %}</dd>{% endif %}
+  </dl>
+  {% if h.cached_answers %}<p><span class="pill warn">Cache</span> {{ h.cached_answers }} answers were served from the gateway's cache. Their time and token figures are not real calls to the model. Start the gateway with <code>CACHE_MAX_ENTRIES=0</code> for a clean measurement.</p>{% endif %}
+  <p>Download: {% for key in run.results.files %}<a href="/evaluation/{{ run.id }}/files/{{ key }}">{{ file_names[key] }}</a>{{ ' · ' if not loop.last }}{% endfor %}</p>
+  {% endif %}
+</section>
+
+{% if questions %}
+<h2>By question</h2>
+<table>
+  <thead><tr><th>Set</th><th>Question</th><th>Right</th><th>Could be off by</th><th>Caught</th><th>False alarms</th><th>Acted, wrong</th><th>Easy</th><th>Medium</th><th>Hard</th></tr></thead>
+  <tbody>{% for q in questions %}
+    <tr>
+      <td><code>{{ q.set }}</code></td><td>{{ q.question }}</td>
+      <td><strong>{{ q.all.correct }} / {{ q.all.decisions }}</strong> ({{ q.all.accuracy_pct }}%)</td>
+      <td>±{{ q.all.margin_pts }} pts</td>
+      <td>{{ q.all.due_caught }} / {{ q.all.due }}</td>
+      <td>{{ q.all.false_alarms }} / {{ q.all.not_due }}</td>
+      <td>{{ q.all.acted_wrong }} / {{ q.all.acted }}</td>
+      {% for tier in ('easy', 'medium', 'hard') %}<td>{% if q.tiers.get(tier) %}{{ q.tiers[tier].correct }} / {{ q.tiers[tier].decisions }}{% else %}<span class="muted">–</span>{% endif %}</td>{% endfor %}
+    </tr>
+  {% endfor %}</tbody>
+</table>
+<p class="muted">"Caught" is how many of the cases that should be flagged got the right answer. "False alarms" is how many of the cases that should stay quiet were flagged. "Could be off by" is the 95% margin on the accuracy: with few texts it is wide, so read small runs as a smoke test. The two <code>quiz_grade_from_points</code> rows are the grade the key points imply, worked out from the answers, not asked of the model.</p>
+
+<h2>By set: time and tokens</h2>
+<table>
+  <thead><tr><th>Set</th><th>Calls</th><th>No answer</th><th>Questions per call</th><th>Median ms</th><th>95th ms</th><th>Slowest ms</th><th>Input tokens per call</th><th>Input tokens</th>{% if run.config.usd_per_mtok is not none %}<th>Cost, USD</th><th>Per 1,000 calls, USD</th>{% endif %}</tr></thead>
+  <tbody>{% for s in run.results.sets %}
+    <tr><td><code>{{ s.set }}</code></td><td>{{ s.calls }}</td><td>{{ s.no_answer }}</td><td>{{ s.questions_per_call }}</td>
+        <td>{{ s.client_p50_ms }}</td><td>{{ s.client_p95_ms }}</td><td>{{ s.client_max_ms }}</td>
+        <td>{{ s.input_tokens_mean }}</td><td>{{ s.input_tokens_total }}</td>
+        {% if run.config.usd_per_mtok is not none %}<td>{{ s.input_usd_total }}</td><td>{{ s.input_usd_per_1000_calls }}</td>{% endif %}</tr>
+  {% endfor %}</tbody>
+</table>
+<p class="muted">Times are round trips from this server to the gateway and on to the model.</p>
+{% endif %}
+{% else %}
+<p class="muted">No run yet.</p>
+{% endif %}
+
+{% if history|length > 1 %}
+<h2>Earlier runs</h2>
+<table>
+  <thead><tr><th>Run</th><th>Finished</th><th>Backend</th><th>Calls</th><th>Decisions right</th><th>Median ms</th></tr></thead>
+  <tbody>{% for r in history %}
+    <tr><td><a href="/evaluation?run={{ r.id }}">#{{ r.id }}</a>{% if run and r.id == run.id %} <span class="pill">shown</span>{% endif %}</td><td>{{ r.finished_at }}</td>
+        {% set rh = r.results.headline %}
+        {% if rh %}<td>{{ rh.backend }}</td><td>{{ rh.calls }}{% if rh.stopped %} <span class="pill warn">stopped</span>{% endif %}</td><td>{{ rh.correct }} / {{ rh.decisions }} ({{ rh.accuracy_pct }}%)</td><td>{{ rh.p50_ms }}</td>
+        {% else %}<td colspan="4"><span class="pill warn">failed</span> {{ r.error }}</td>{% endif %}</tr>
+  {% endfor %}</tbody>
+</table>
+{% endif %}
+{% endblock %}

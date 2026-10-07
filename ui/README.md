@@ -70,6 +70,7 @@ Tests need neither: `..\.venv\Scripts\python -m pytest tests/` from `ui/`.
 | Outbox & logs | The three local sinks: email outbox, webhook log, Salesforce log |
 | Inspector | Every gateway call: request, answers, bands, latency, flags, outcome. Also a side panel |
 | Scenarios | Runs every acceptance check in four columns and exports the matrix |
+| Evaluation | Sends the labelled texts to the gateway and scores the answers; you choose how many texts per set |
 | Settings | Gateway status, test call, module toggles, fault switches, restore seed data |
 
 Two modules are not on the scope page and were added for the PoC. Scope 9 hints
@@ -121,6 +122,32 @@ timeouts.
   against the real model. Against the stub model most Normal checks fail.
 - A failed check under a **fault column** means the fallback is wrong, which is a
   platform problem.
+
+## Evaluation page
+
+The Evaluation page runs the same labelled sets and scoring as
+`python -m simulators.eval_task_quality`, from the browser, so nobody needs a shell
+on the server. It reads the texts from `simulators/` in this repo, so deploy the
+repo as a whole, not `ui/` alone.
+
+- **Texts per set.** Each of the seven sets has its own number, from zero (skip) to
+  the full set. A smaller number keeps the same share of easy, medium and hard
+  texts, and the same number always picks the same texts, so two runs can be
+  compared. The parked sets start at zero.
+- **One run at a time.** Progress shows on the page, and a run can be stopped; what
+  it has collected is kept. A run whose first 10 calls get no answer stops itself.
+- **Results.** Accuracy by question and tier, time and input tokens by set, and
+  cost if you give a price per million input tokens. Every run is kept, with its
+  CSV files under `ui/data/evaluations/run_{n}/`, and survives "Restore seed data".
+- **Cache.** The gateway caches answers by default, so a repeat of the same texts
+  is answered from memory. The page says how many answers came from the cache.
+  Start the gateway with `CACHE_MAX_ENTRIES=0` when the timings and token counts
+  matter.
+- **No login.** The mock has none, so anyone who can open the page can start a run,
+  and with an external backend every call is billed. Put the server behind
+  whatever access control the network provides.
+
+These calls are not written to the Inspector.
 
 ## What the gateway source settled
 
@@ -179,6 +206,7 @@ ui/
     create_ai.py         Create with AI stub
     seed.py              the six seeded projects and their responses
     scenarios.py         the acceptance checks and the runner
+    evaluation.py        the Evaluation page's runner (the sets live in ../simulators)
     routes/              design, participate, tools (Inspector, Settings, Scenarios)
     templates/, static/  server-rendered pages
   tests/                 plain-function tests against an in-process fake gateway

@@ -1,14 +1,14 @@
 """The test bench itself: Inspector, Settings (module toggles, fault switches),
-the jobs polling test and the scenario runner."""
+the jobs polling test, the scenario runner and the evaluation runner."""
 from __future__ import annotations
 
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse
 from starlette.datastructures import FormData
 
-from sogo_lite import db, engine, gateway, modules, scenarios, seed
+from sogo_lite import db, engine, evaluation, gateway, modules, scenarios, seed
 from sogo_lite.config import get_settings
 from sogo_lite.modules import quiz_scoring
 from sogo_lite.web import form_data, redirect, render
@@ -218,3 +218,47 @@ def scenario_json():
                          "checks": [{"id": s.id, "scope": s.scope, "title": s.title,
                                      **run["results"].get(s.id, {})} for s in scenarios.SCENARIOS],
                          "latency_normal": run["latency"]})
+
+
+# ── evaluation runner ───────────────────────────────────────────────────────
+
+EVALUATION_PRESETS = (10, 25, 50)
+
+
+@router.get("/evaluation", response_class=HTMLResponse)
+def evaluation_page(request: Request, run: Optional[int] = None, n: Optional[int] = None) -> HTMLResponse:
+    sets = evaluation.set_options()
+    defaults = {s["id"]: (min(n, s["texts"]) if n and n > 0 else s["texts"]) if s["enabled"] else 0 for s in sets}
+    shown = evaluation.get(run)
+    return render(request, "evaluation.html", sets=sets, defaults=defaults, presets=EVALUATION_PRESETS,
+                  state=evaluation.STATE, run=shown, questions=evaluation.by_question(shown) if shown else [],
+                  history=evaluation.history(), file_names=evaluation.FILE_NAMES,
+                  max_split=evaluation.MAX_SPLIT_CHECK, health=gateway.health())
+
+
+@router.post("/evaluation/run")
+def evaluation_run(form: FormData = Depends(form_data)):
+    config, error = evaluation.parse_config(form)
+    if config is None:
+        return redirect("/evaluation", error)
+    started, message = evaluation.start(config)
+    return redirect("/evaluation", None if started else message)
+
+
+@router.post("/evaluation/stop")
+def evaluation_stop():
+    evaluation.stop()
+    return redirect("/evaluation", "Stopping after the call in flight.")
+
+
+@router.get("/api/evaluation/status")
+def evaluation_status() -> JSONResponse:
+    return JSONResponse({k: evaluation.STATE[k] for k in ("running", "done", "total", "current")})
+
+
+@router.get("/evaluation/{run_id}/files/{key}")
+def evaluation_file(run_id: int, key: str):
+    path = evaluation.file_path(run_id, key)
+    if path is None:
+        return redirect("/evaluation", "That file is not available.")
+    return FileResponse(path, media_type="text/csv", filename=path.name)
