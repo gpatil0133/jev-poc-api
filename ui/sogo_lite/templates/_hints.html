@@ -1,0 +1,9 @@
+{% for h in hints %}
+<div class="hint">
+  {% if h.kind == 'sensitive' %}<strong>This looks sensitive.</strong> Consider Encouraged Response instead of Mandatory.
+  {% else %}<strong>This looks like a "why" follow-up.</strong> Mark it as a follow-up question?{% endif %}
+  <span class="pill band-{{ h.band }}">{{ h.band }}</span>{% if h.confidence is not none %} <span class="muted">{{ '%.2f'|format(h.confidence) }}</span>{% endif %}
+  <form method="post" action="/suggestions/{{ h.id }}/accept"><button>{{ 'Use Encouraged Response' if h.kind == 'sensitive' else 'Mark as follow-up' }}</button></form>
+  <form method="post" action="/suggestions/{{ h.id }}/dismiss"><button class="ghost">Dismiss</button></form>
+</div>
+{% endfor %}

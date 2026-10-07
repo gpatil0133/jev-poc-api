@@ -1,0 +1,197 @@
+[
+  {
+    "id": "vq_loyalty_app",
+    "type": "choice",
+    "feature": "Virtual Questions",
+    "source": "comments.csv",
+    "expected_column": "vq_loyalty_app",
+    "instructions": "Did the respondent mention the Harbour & Pine loyalty app?",
+    "classes": {
+      "yes_negative": "mentions the loyalty or rewards app and is unhappy with it",
+      "yes_positive": "mentions the loyalty or rewards app and is happy with it",
+      "not_mentioned": "does not talk about the loyalty or rewards app"
+    }
+  },
+  {
+    "id": "coach_blind_spot",
+    "type": "choice",
+    "feature": "Survey Coach (after launch)",
+    "source": "comments.csv",
+    "expected_column": "coach_question",
+    "instructions": "Which survey question is this comment mainly about?",
+    "classes": {
+      "staff": "How would you rate our store staff?",
+      "delivery": "How would you rate the delivery of your order?",
+      "product": "How would you rate the quality of the product?",
+      "billing": "How easy was it to pay and get your invoice or refund?",
+      "none_of_these": "about something no listed question asks, or not a real answer"
+    }
+  },
+  {
+    "id": "owner_team",
+    "type": "choice",
+    "feature": "Feedback Owners",
+    "source": "comments.csv",
+    "expected_column": "owner_team",
+    "instructions": "Which team should own this comment?",
+    "classes": {
+      "billing": "invoices, charges, refunds, payment, prices at the till",
+      "delivery": "couriers, delivery dates, tracking, items damaged or missing on arrival",
+      "store_staff": "behaviour, helpfulness or availability of store employees",
+      "facilities": "car park, building, lifts, lighting, signage",
+      "digital": "website, loyalty app, login, online account",
+      "product": "product quality, defects, assembly, how the item matches its description",
+      "none": "nothing a team could act on, or not a real answer"
+    }
+  },
+  {
+    "id": "callback_offer",
+    "type": "choice",
+    "feature": "Callback offer",
+    "source": "comments.csv",
+    "expected_column": "callback",
+    "instructions": "Does this comment describe a problem that is still unresolved for the person?",
+    "classes": {
+      "unresolved": "a problem of their own that is still open: waiting for a refund, item, fix or reply",
+      "not_unresolved": "no open problem: praise, a past annoyance, a general opinion, or already resolved"
+    }
+  },
+  {
+    "id": "fix_issue",
+    "type": "choice",
+    "feature": "Fix Tracker (decision 1)",
+    "source": "comments.csv",
+    "expected_column": "issue",
+    "instructions": "Which known issue does this comment report?",
+    "classes": {
+      "late_delivery": "order arrived after the promised date, or the whole order is overdue",
+      "billing_error": "charged the wrong amount, charged twice, or the invoice or statement is wrong",
+      "damaged_item": "item arrived broken, cracked, dented or chipped",
+      "app_login": "cannot sign in to the loyalty app, or keeps being logged out",
+      "none": "no complaint, or a complaint about something else"
+    }
+  },
+  {
+    "id": "fix_status",
+    "type": "choice",
+    "feature": "Fix Tracker (decision 2)",
+    "source": "fix_tracker_followups.csv",
+    "expected_column": "expected_status",
+    "instructions": "Earlier this customer reported: {issue}. According to this new answer, what is the state of that problem now?",
+    "classes": {
+      "fixed": "says the earlier problem has been resolved, or did not happen this time",
+      "still_happening": "says the same problem is continuing or happened again",
+      "worse": "says the problem has grown or caused further harm",
+      "not_mentioned": "does not talk about the earlier problem"
+    }
+  },
+  {
+    "id": "coach_wording",
+    "type": "choice",
+    "feature": "Survey Coach (before launch)",
+    "source": "survey_questions.csv",
+    "expected_column": "expected_flaw",
+    "instructions": "Does this survey question have a wording problem?",
+    "classes": {
+      "leading": "wording pushes the respondent toward a particular answer",
+      "double_barrelled": "asks about two different things in one question",
+      "vague_time_frame": "unclear period or frequency, such as 'recently' or 'regularly'",
+      "jargon": "uses internal terms or abbreviations a respondent may not know",
+      "sensitive": "asks for private information such as income, health or religion",
+      "overlapping_options": "answer options overlap or leave gaps",
+      "fine": "clear, neutral, one topic, and the options fit"
+    }
+  },
+  {
+    "id": "question_type",
+    "type": "choice",
+    "feature": "Question type pick",
+    "source": "survey_questions.csv",
+    "expected_column": "expected_type",
+    "instructions": "Which question type fits this survey question best?",
+    "classes": {
+      "rating": "rate one thing on a scale",
+      "nps": "likelihood to recommend, from 0 to 10",
+      "multiple_choice": "pick from a list of options",
+      "matrix": "rate several items on the same scale",
+      "open_text": "answer in the respondent's own words",
+      "yes_no": "a yes or no answer"
+    }
+  },
+  {
+    "id": "invitation_hold",
+    "type": "choice",
+    "feature": "Invitation hold",
+    "source": "activity_notes.csv",
+    "expected_column": "expected_decision",
+    "instructions": "Given this latest note on the contact, should a survey invitation go out now?",
+    "classes": {
+      "send": "nothing in the note makes this a bad time",
+      "hold": "a temporary situation makes this a bad time: open complaint, dispute, illness, bereavement, away",
+      "dont_send": "the contact should not be surveyed at all: deceased, asked for no contact, legal action, wrong person"
+    }
+  },
+  {
+    "id": "seniority",
+    "type": "choice",
+    "feature": "Free text to category",
+    "source": "free_text_profile.csv",
+    "expected_column": "expected_category",
+    "instructions": "Which seniority level does this job title belong to?",
+    "classes": {
+      "individual_contributor": "does the work directly, no people management",
+      "manager": "manages a team, shift or store",
+      "senior_management": "senior manager or head of a function",
+      "director": "director level, including assistant or associate director",
+      "executive": "C-level, vice president, managing director, owner or founder",
+      "cant_tell": "the answer does not show a level, or is not a job title"
+    }
+  },
+  {
+    "id": "industry",
+    "type": "choice",
+    "feature": "Free text to category",
+    "source": "free_text_profile.csv",
+    "expected_column": "expected_category",
+    "instructions": "Which industry does this answer describe?",
+    "classes": {
+      "retail": "shops and online stores",
+      "healthcare": "hospitals, clinics, medical and dental care",
+      "education": "schools, colleges and universities",
+      "financial_services": "banks, insurance, lending and payments",
+      "technology": "software and IT services",
+      "manufacturing": "factories and production",
+      "hospitality": "hotels, restaurants and cafes",
+      "public_sector": "government and local authorities",
+      "cant_tell": "none of these, or not an industry"
+    }
+  },
+  {
+    "id": "identity_warning",
+    "type": "choice",
+    "feature": "Identity warning",
+    "source": "ex_comments.csv",
+    "expected_column": "expected_label",
+    "instructions": "Could this anonymous employee comment reveal who a specific person is?",
+    "classes": {
+      "identifies_writer": "a unique role, shift, location, tenure or event could reveal who wrote it",
+      "names_someone_else": "names or clearly points to another specific person",
+      "safe": "no specific person could be identified"
+    }
+  },
+  {
+    "id": "invitation_reply",
+    "type": "choice",
+    "feature": "Invitation replies",
+    "source": "invitation_replies.csv",
+    "expected_column": "expected_label",
+    "instructions": "What kind of reply to a survey invitation email is this?",
+    "classes": {
+      "unsubscribe": "asks to stop receiving emails or to be removed",
+      "wrong_person": "says the email reached the wrong person, or the person has left",
+      "out_of_office": "automatic reply saying the person is away",
+      "feedback": "gives their opinion or experience instead of taking the survey",
+      "question": "asks about the survey or how to take it"
+    }
+  }
+]

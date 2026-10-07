@@ -1,0 +1,29 @@
+﻿followup_id,contact_id,branch,original_comment_id,stored_issue,original_text,new_text,expected_status,difficulty
+FU001,C1037,Northgate,CM037,billing_error,I was charged twice for the same rug and my refund still has not arrived after three weeks.,Still no refund for the rug I was charged twice for. This is now two months.,still_happening,easy
+FU002,C1038,Northgate,CM038,billing_error,Invoice shows the full price even though the sale discount was applied at the till. I need a corrected invoice for my expenses.,"Got the corrected invoice in the end, thanks.",fixed,easy
+FU003,C1041,Northgate,CM041,billing_error,They took the deposit and then the whole amount as well. Can someone ring me?,"Not only did nobody call, this month you have taken another payment I never agreed to.",worse,easy
+FU004,C1044,Northgate,CM044,billing_error,"Prices on the shelf did not match what scanned at the till, had to get the manager over.","Shelf labels were wrong again on Saturday, same story at the till.",still_happening,paraphrase
+FU005,C2001,Northgate,,billing_error,My card was debited but the order shows as unpaid.,Order is still marked unpaid and I keep getting reminder emails.,still_happening,paraphrase
+FU006,C1039,Online,CM039,billing_error,Delivery fee was added twice at checkout. It was refunded quickly once I called.,"Great service this time, the sofa bed is perfect.",not_mentioned,easy
+FU007,C1043,Online,CM043,billing_error,Finance option at checkout quoted 0% and my statement shows interest.,The interest was reversed and the statement is correct now.,fixed,easy
+FU008,C2002,Riverside,,billing_error,Charged for delivery on an order that qualified for free shipping.,Shipping charge was credited back within the week.,fixed,paraphrase
+FU009,C2003,Downtown,,billing_error,Receipt total did not match what left my account.,"All sorted, the difference was refunded.",fixed,easy
+FU010,C2004,Online,,billing_error,Voucher code was accepted but the discount never came off the total.,"You honoured the voucher after I emailed, appreciated.",fixed,paraphrase
+FU011,C1027,Online,CM027,late_delivery,The sofa arrived two weeks late and the driver left it outside in the rain.,This order came on the day you said it would. Much better.,fixed,paraphrase
+FU012,C1028,Online,CM028,late_delivery,"Still waiting for the dining table I ordered in August. No update, no tracking.",It is November and the table from August is still not here.,still_happening,easy
+FU013,C1029,Online,CM029,late_delivery,Courier turned up a day after the slot I paid extra for.,Paid for a timed slot again and again the driver missed it.,still_happening,easy
+FU014,C1033,Riverside,CM033,late_delivery,"Promised by Friday, came the following Thursday. I took a day off work for nothing.","New order, same problem, except this time it was nearly three weeks overdue.",worse,tricky
+FU015,C2005,Online,,late_delivery,Bed frame was ten days late.,Second order turned up bang on time.,fixed,easy
+FU016,C2006,Online,,late_delivery,Delivery date was moved three times.,"Lovely lamp, very happy with it.",not_mentioned,easy
+FU017,C2007,Downtown,,late_delivery,"Click and collect order was not ready when I arrived, had to come back the next day.",Collection was ready and waiting when I walked in.,fixed,paraphrase
+FU018,C2008,Online,,late_delivery,Waited in all day and nobody came.,Once again I stayed home for a delivery that did not show up.,still_happening,paraphrase
+FU019,C1030,Northgate,CM030,damaged_item,"Wardrobe came with a cracked door panel, box looked like it had been dropped, and I am still waiting for a replacement panel.","Replacement door panel arrived and was fitted, wardrobe looks fine now.",fixed,easy
+FU020,C1034,Online,CM034,damaged_item,Mirror was smashed when I opened the box. Third time I am writing about this.,The replacement mirror turned up cracked as well.,still_happening,tricky
+FU021,C1052,Downtown,CM052,damaged_item,"Manager was dismissive when I raised the damaged table, said it was not his department. I still need it sorted.","Still stuck with the damaged table, and now I am told the warranty has run out because of the delay.",worse,easy
+FU022,C2009,Riverside,,damaged_item,Chest of drawers arrived with a dented corner.,They swapped the dented drawers within a few days.,fixed,easy
+FU023,C2010,Online,,damaged_item,Glass shelf was chipped out of the box.,Friendly driver this time.,not_mentioned,tricky
+FU024,C1001,Online,CM001,app_login,The new app keeps logging me out before I can claim my points.,Since the update I stay logged in and my points are all there.,fixed,easy
+FU025,C1003,Online,CM003,app_login,I have reset my password four times and still cannot sign in to the rewards thing on my phone.,"I gave up on the app, still cannot sign in.",still_happening,easy
+FU026,C1006,Online,CM006,app_login,"App says my account does not exist, but I have been a member for three years. Nobody has replied to my email about it.",Now it has locked me out completely and wiped my points balance.,worse,easy
+FU027,C1007,Downtown,CM007,app_login,"Nice store, helpful people. Only gripe is the loyalty app asking me to log in every single time.","No longer asks for my password every visit, much better.",fixed,paraphrase
+FU028,C2011,Riverside,,app_login,The app throws me out every time I open the rewards tab.,"The store smelled lovely, nice candles.",not_mentioned,easy

@@ -1,0 +1,26 @@
+﻿row_id,text,expected_label,difficulty
+IR001,Please remove me from your mailing list.,unsubscribe,easy
+IR002,STOP,unsubscribe,easy
+IR003,"I never signed up for this, stop emailing me.",unsubscribe,easy
+IR004,Take me off whatever list this is.,unsubscribe,paraphrase
+IR005,"Not interested, do not contact me again.",unsubscribe,easy
+IR006,I'm away until Monday but please stop sending these.,unsubscribe,tricky
+IR007,"I think you have the wrong address, I have never shopped with you.",wrong_person,easy
+IR008,"Sarah left the company in May, this inbox is now monitored by the office team.",wrong_person,paraphrase
+IR009,"This is a shared mailbox for accounts, not the person you want.",wrong_person,paraphrase
+IR010,"You want my father, same name. His address is different.",wrong_person,paraphrase
+IR011,"No idea who Mr Okafor is, this is not him.",wrong_person,easy
+IR012,I am out of the office until 14 October with limited access to email.,out_of_office,easy
+IR013,Thank you for your message. I am on annual leave and will reply on my return.,out_of_office,easy
+IR014,Auto-reply: currently on parental leave. For urgent matters contact reception.,out_of_office,easy
+IR015,Automatic reply: I am travelling this week and responses will be delayed.,out_of_office,easy
+IR016,Thanks for your email! Our office is closed for the public holiday.,out_of_office,paraphrase
+IR017,I would rather just tell you here: the delivery was two weeks late and nobody called.,feedback,easy
+IR018,"Survey link aside, your Riverside team was wonderful, please pass that on.",feedback,easy
+IR019,"Not filling in a form. The sofa is falling apart after two months, that is my feedback.",feedback,easy
+IR020,"Everything was fine, nothing to report.",feedback,paraphrase
+IR021,Honestly your prices have gone up too much and I will shop elsewhere.,feedback,tricky
+IR022,"The link does not open on my phone, is there another way to respond?",question,easy
+IR023,How long does the survey take?,question,easy
+IR024,Is this email genuinely from Harbour & Pine? It looks like phishing.,question,paraphrase
+IR025,Will my answers be anonymous?,question,easy

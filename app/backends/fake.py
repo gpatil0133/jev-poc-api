@@ -65,6 +65,7 @@ def fake_result(state: Any, questions: dict[str, dict]) -> dict[str, Any]:
 class FakeBackend:
     """In-process DecisionBackend for tests: counts calls, can be slow or down."""
 
+    name = "fake"
     max_batch_states = 64
 
     def __init__(self, delay_s: float = 0.0, down: bool = False):

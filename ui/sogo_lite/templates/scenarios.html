@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Scenarios{% endblock %}
+{% block content %}
+<h1>Scenario runner</h1>
+<p class="muted">Replays the scope page's examples through the real event path, once per column. A failed check under Normal means the scope does not work as described. A failed check under a fault column means the fallback is wrong, which is a platform problem, not a model problem.</p>
+<div class="row">
+  <form method="post" action="/scenarios/run"><button {{ 'disabled' if state.running }}>Run all scenarios</button></form>
+  {% if run %}<a class="button ghost" href="/scenarios/export.csv">Export CSV</a><a class="button ghost" href="/scenarios/export.json">Export JSON</a>{% endif %}
+</div>
+<div id="run-progress" data-running="{{ '1' if state.running else '0' }}" {{ 'hidden' if not state.running }}>
+  <progress max="{{ state.total or 1 }}" value="{{ state.done }}"></progress>
+  <p class="muted"><span id="run-count">{{ state.done }} of {{ state.total }}</span> · <span id="run-current">{{ state.current }}</span></p>
+</div>
+{% if run %}
+<p>Run #{{ run.id }} · started {{ run.started_at }} · finished {{ run.finished_at }}. Every module was on for the run; the saved toggles and fault switches were not changed.</p>
+<table class="matrix">
+  <thead><tr><th>Check</th>{% for col, label, _ in columns %}<th>{{ label }}</th>{% endfor %}</tr></thead>
+  <tbody>
+  {% for scope, items in scopes.items() %}
+    <tr class="scope"><th>{{ scope }}</th>
+      {% for col, _, _ in columns %}
+        {% set cells = [] %}{% for s in items %}{% if run.results.get(s.id, {}).get(col) %}{{ cells.append(run.results[s.id][col].status) or '' }}{% endif %}{% endfor %}
+        <th>{{ cells|select('equalto', 'pass')|list|length }} / {{ cells|reject('equalto', 'na')|list|length }} pass</th>
+      {% endfor %}
+    </tr>
+    {% for s in items %}
+    <tr>
+      <td><code>{{ s.id }}</code> {{ s.title }}</td>
+      {% for col, _, _ in columns %}
+        {% set cell = run.results.get(s.id, {}).get(col) %}
+        <td class="cell {{ cell.status if cell }}">
+          {% if cell %}<strong>{{ {'pass': 'Pass', 'fail': 'Fail', 'na': 'n/a'}[cell.status] }}</strong>
+          <div class="muted">{{ cell.detail }}</div>
+          {% if cell.log_to > cell.log_from %}<a href="/inspector?lo={{ cell.log_from }}&hi={{ cell.log_to }}">{{ cell.log_to - cell.log_from }} call(s)</a>{% endif %}
+          {% else %}<span class="muted">not run</span>{% endif %}
+        </td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  {% endfor %}
+  </tbody>
+</table>
+<h2>Latency, Normal column</h2>
+<table>
+  <thead><tr><th>Call type</th><th>Endpoint</th><th>Timeout ms</th><th>Calls</th><th>Fallback rate</th><th>Cache hits</th><th>Median ms</th><th>95th ms</th><th>Answered inside the timeout</th></tr></thead>
+  <tbody>{% for row in run.latency %}
+    <tr><td>{{ row.kind }}</td><td><code>{{ row.endpoint }}</code></td><td>{{ row.timeout_ms }}</td><td>{{ row.calls }}</td><td>{{ row.fallback_rate }}%</td>
+        <td>{{ row.cache_hit_rate }}%</td><td>{{ row.p50_ms }}</td><td>{{ row.p95_ms }}</td><td>{{ row.within_timeout_pct }}%</td></tr>
+  {% else %}<tr><td colspan="9" class="muted">No calls were made.</td></tr>{% endfor %}</tbody>
+</table>
+<p class="muted">Round-trip times measured by the client. Repeated texts are served from the gateway's cache, so read the cache-hit column before reading the latency.</p>
+{% else %}
+<p class="muted">No run yet. {{ scopes.values()|map('length')|sum }} checks × {{ columns|length }} columns. A full run takes a few minutes because the slow-gateway column waits out the timeouts.</p>
+{% endif %}
+{% endblock %}

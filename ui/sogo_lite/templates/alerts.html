@@ -1,0 +1,111 @@
+{% extends "project_base.html" %}
+{% block content %}
+{% if not rule %}
+<section class="card">
+  <h2>Rules</h2>
+  <table>
+    <thead><tr><th>Rule</th><th>When all of</th><th>Then</th><th></th></tr></thead>
+    <tbody>
+    {% for r in rules %}
+      <tr>
+        <td><a href="/design/{{ project.survey_no }}/alerts/{{ r.id }}">{{ r.name }}</a>{% if not r.enabled %} <span class="pill">off</span>{% endif %}</td>
+        <td>{% for c in r.conditions %}<div>{{ c.label }}{% if c.type == 'meaning' and not module_on('alert_meaning') %} <span class="pill">module off: not met</span>{% endif %}</div>{% else %}<span class="muted">no conditions: never fires</span>{% endfor %}</td>
+        <td>{% for a in r.actions %}<div>{{ a.type }} → {{ a.target }}</div>{% else %}<span class="muted">no actions</span>{% endfor %}</td>
+        <td class="actions"><a href="/design/{{ project.survey_no }}/alerts/{{ r.id }}">Edit</a></td>
+      </tr>
+    {% else %}<tr><td colspan="4" class="muted">No rules yet.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  <p class="muted">Rules run when a response is submitted. Actions are written to the local <a href="/sinks?survey_no={{ project.survey_no }}">outbox and logs</a>; nothing is sent.</p>
+  <form method="post" action="/design/{{ project.survey_no }}/alerts" class="row"><label>New rule <input name="name" required placeholder="Rule name"></label><button>Create rule</button></form>
+</section>
+{% else %}
+{% set here = '/design/' ~ project.survey_no ~ '/alerts/' ~ rule.id %}
+<p><a href="/design/{{ project.survey_no }}/alerts">← All rules</a></p>
+<section class="card">
+  <form method="post" action="{{ here }}" class="row">
+    <label>Rule name <input name="name" value="{{ rule.name }}" required></label>
+    <label class="check"><input type="checkbox" name="enabled" value="1" {{ 'checked' if rule.enabled }}> Enabled</label>
+    <button name="action" value="rename">Save</button>
+    <button name="action" value="delete" class="link danger" data-confirm="Delete this rule?">Delete rule</button>
+  </form>
+</section>
+<section class="card">
+  <h2>When all of these are true</h2>
+  <table><tbody>
+  {% for c in rule.conditions %}
+    <tr><td>{{ c.label }}{% if c.type == 'meaning' and not module_on('alert_meaning') %} <span class="pill">module off: counts as not met</span>{% endif %}</td>
+        <td class="actions"><form method="post" action="{{ here }}"><input type="hidden" name="index" value="{{ loop.index0 }}"><button name="action" value="del_condition" class="link danger">Remove</button></form></td></tr>
+  {% else %}<tr><td class="muted">No conditions. A rule with no conditions never fires.</td></tr>{% endfor %}
+  </tbody></table>
+
+  <h3>Add a condition</h3>
+  <form method="post" action="{{ here }}" class="row">
+    <input type="hidden" name="ctype" value="picked">
+    <label>A picked answer <select name="option_id">{% for q in questions if q.options %}<optgroup label="{{ q.qid }}: {{ q.wording }}">{% for o in q.options %}<option value="{{ o.id }}">{{ o.text }}</option>{% endfor %}</optgroup>{% endfor %}</select></label>
+    <button name="action" value="add_condition" class="ghost">Add</button>
+  </form>
+  <form method="post" action="{{ here }}" class="row">
+    <input type="hidden" name="ctype" value="count">
+    <label>A count of answers on <select name="qid">{% for q in questions if q.type == 'checkbox' %}<option value="{{ q.qid }}">{{ q.qid }}: {{ q.wording }}</option>{% endfor %}</select></label>
+    <label><select name="op"><option>&gt;=</option><option>&lt;=</option><option>=</option></select></label>
+    <label><input name="value" size="3" value="2"></label>
+    <button name="action" value="add_condition" class="ghost">Add</button>
+  </form>
+  <form method="post" action="{{ here }}" class="row">
+    <input type="hidden" name="ctype" value="score">
+    <label>A metric score on <select name="qid">{% for q in questions if q.type == 'metric' %}<option value="{{ q.qid }}">{{ q.qid }}: {{ q.wording }}</option>{% endfor %}</select></label>
+    <label><select name="op"><option>&lt;=</option><option>&gt;=</option><option>=</option></select></label>
+    <label><input name="value" size="3" value="6"></label>
+    <button name="action" value="add_condition" class="ghost">Add</button>
+  </form>
+
+  {% if meaning_on %}
+  <h3>The comment means… <small>scope 2</small></h3>
+  <form method="get" class="row">
+    <label>Comment question <select name="cq" data-autosubmit>
+      <option value="">choose a Text Box…</option>
+      {% for q in questions if q.type == 'text' %}<option value="{{ q.qid }}" {{ 'selected' if comment and comment.qid == q.qid }}>{{ q.qid }}: {{ q.wording }}</option>{% endfor %}
+    </select></label>
+    <noscript><button>Choose</button></noscript>
+  </form>
+  {% if comment %}
+  <form method="post" action="{{ here }}" class="stack">
+    <input type="hidden" name="ctype" value="meaning"><input type="hidden" name="qid" value="{{ comment.qid }}">
+    <div class="row">
+      <label class="check"><input type="radio" name="source" value="class" {{ 'checked' if class_refs else 'disabled' }}> a class from this question's class set</label>
+      <label><select name="class_ref">{% for r in class_refs %}<option value="{{ r.ref }}">{{ r.text }}</option>{% else %}<option value="">no classes defined yet</option>{% endfor %}</select></label>
+    </div>
+    <div class="row">
+      <label class="check"><input type="radio" name="source" value="ready" {{ 'checked' if not class_refs and ready_made }} {{ 'disabled' if not ready_made }}> a ready-made meaning</label>
+      <label><select name="task_id">{% for t in ready_made %}<option value="{{ t.id }}">{{ t.id }}: {{ t.description }}</option>{% else %}<option value="">catalog not available</option>{% endfor %}</select></label>
+    </div>
+    <div class="row">
+      <label class="check"><input type="radio" name="source" value="own" {{ 'checked' if not class_refs and not ready_made }}> my own description</label>
+      <label class="grow"><input name="own" placeholder="the customer is asking for a refund"></label>
+    </div>
+    <div class="row">
+      <label>Minimum probability <input name="min_prob" size="4" value="{{ '%.2f'|format(default_min_prob) }}"></label>
+      <button name="action" value="add_condition">Add condition</button>
+    </div>
+    <p class="muted">A ready-made or written meaning is added to the question's class set as a yes/no question, so there is still one binding per question. Leave the minimum probability empty to use the gateway's band. When the gateway cannot answer, the condition counts as not met and the skipped check is recorded on the response.</p>
+  </form>
+  {% endif %}
+  {% else %}<p class="muted">"The comment means…" is off (scope 2 module).</p>{% endif %}
+</section>
+<section class="card">
+  <h2>Then</h2>
+  <table><tbody>
+  {% for a in rule.actions %}
+    <tr><td>{{ sinks[a.type] }} → {{ a.target }}</td>
+        <td class="actions"><form method="post" action="{{ here }}"><input type="hidden" name="index" value="{{ loop.index0 }}"><button name="action" value="del_action" class="link danger">Remove</button></form></td></tr>
+  {% else %}<tr><td class="muted">No actions.</td></tr>{% endfor %}
+  </tbody></table>
+  <form method="post" action="{{ here }}" class="row">
+    <label>Action <select name="sink">{% for k, v in sinks.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></label>
+    <label class="grow">Email address, webhook URL or Salesforce object <input name="target" placeholder="alerts@example.test"></label>
+    <button name="action" value="add_action" class="ghost">Add action</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

@@ -149,6 +149,10 @@ class ClassifyService:
         self._live_inflight = 0
         self._log_tasks: set[asyncio.Task] = set()
 
+    def _model_key(self, cset: CompiledSet) -> str:
+        """Cache namespace: an answer from one backend is never served as another's."""
+        return f"{getattr(self.backend, 'name', 'laya')}:{cset.model}"
+
     def _log_later(self, records: list[dict]) -> None:
         """Write the decision log off the response path."""
         task = asyncio.create_task(self.decision_log.write(records))
@@ -202,7 +206,7 @@ class ClassifyService:
             fallback_reason = "empty_text"
         else:
             for q in cset.questions:
-                hit = self.cache.get((shash, cset.model, q.qhash))
+                hit = self.cache.get((shash, self._model_key(cset), q.qhash))
                 if hit is not None:
                     raws[q.qid] = hit
                     cached.add(q.qid)
@@ -232,7 +236,7 @@ class ClassifyService:
                             raw = decode(q, result.get("answers") or {})
                             if raw is not None:
                                 raw["model"] = model
-                                self.cache.put((shash, cset.model, q.qhash), raw)
+                                self.cache.put((shash, self._model_key(cset), q.qhash), raw)
                             raws[q.qid] = raw
                 except asyncio.TimeoutError:
                     fallback_reason = "timeout"
@@ -291,7 +295,7 @@ class ClassifyService:
                 if not entries[i][2].strip():
                     continue
                 for q in cset.questions:
-                    hit = self.cache.get((hashes[i], cset.model, q.qhash))
+                    hit = self.cache.get((hashes[i], self._model_key(cset), q.qhash))
                     if hit is not None:
                         raws[i][q.qid] = hit
                         cached[i].add(q.qid)
@@ -318,7 +322,7 @@ class ClassifyService:
                             raw = decode(q, result.get("answers") or {})
                             if raw is not None:
                                 raw["model"] = model
-                                self.cache.put((shash, cset.model, q.qhash), raw)
+                                self.cache.put((shash, self._model_key(cset), q.qhash), raw)
                             decoded[q.qid] = raw
                     for i in owners:
                         # A partly cached item keeps its cached answers.

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Inspector{% endblock %}
+{% block content %}
+<h1>Inspector <small>every gateway call, newest first</small></h1>
+<form method="get" class="row">
+  {% if embed %}<input type="hidden" name="embed" value="1">{% endif %}
+  <label>Module <select name="module" data-autosubmit>
+    <option value="">all</option>
+    {% for m in MODULES %}<option value="{{ m.id }}" {{ 'selected' if filters.module == m.id }}>{{ m.n }} {{ m.name }}</option>{% endfor %}
+    {% for extra in ['settings', 'inspector'] %}<option value="{{ extra }}" {{ 'selected' if filters.module == extra }}>{{ extra }}</option>{% endfor %}
+  </select></label>
+  <label>Project <select name="survey_no" data-autosubmit>
+    <option value="">all</option>
+    {% for p in projects %}<option value="{{ p.survey_no }}" {{ 'selected' if filters.survey_no == p.survey_no|string }}>{{ p.survey_no }} {{ p.name }}</option>{% endfor %}
+  </select></label>
+  <label>Response <input name="response_id" size="5" value="{{ filters.response_id }}"></label>
+  {% if filters.lo or filters.hi %}<input type="hidden" name="lo" value="{{ filters.lo }}"><input type="hidden" name="hi" value="{{ filters.hi }}"><span class="pill">calls {{ filters.lo }}–{{ filters.hi }}</span>{% endif %}
+  <button class="ghost">Filter</button>
+  <a class="button ghost" href="/inspector{{ '?embed=1' if embed }}">Reset</a>
+</form>
+<div class="strip">
+  <div><strong>{{ summary.calls }}</strong><span>calls</span></div>
+  <div><strong>{{ summary.fallback_rate if summary.fallback_rate is not none else '–' }}{{ '%' if summary.fallback_rate is not none }}</strong><span>fallback rate</span></div>
+  <div><strong>{{ summary.cache_hit_rate if summary.cache_hit_rate is not none else '–' }}{{ '%' if summary.cache_hit_rate is not none }}</strong><span>cache hits</span></div>
+  <div><strong>{{ summary.p50_ms if summary.p50_ms is not none else '–' }}</strong><span>median ms (round trip)</span></div>
+  <div><strong>{{ summary.p95_ms if summary.p95_ms is not none else '–' }}</strong><span>95th percentile ms</span></div>
+</div>
+<p class="muted">Timeouts in force: {% for k, v in timeouts.items() %}{{ k }} {{ v }} ms{{ ' · ' if not loop.last }}{% endfor %}.{% if total > calls|length %} Showing the newest {{ calls|length }} of {{ total }}; the summary covers all {{ total }}.{% endif %}</p>
+<table class="log">
+  <thead><tr><th>#</th><th>Time</th><th>Module · trigger</th><th>Endpoint</th><th>Answers</th><th>Latency ms</th><th>Flags</th><th>Outcome</th></tr></thead>
+  <tbody>
+  {% for c in calls %}
+    <tr class="{{ 'fallback' if c.fallback }}">
+      <td><a href="/inspector/{{ c.id }}" {% if embed %}target="_top"{% endif %}>{{ c.id }}</a></td>
+      <td class="narrow">{{ c.ts[11:] }}</td>
+      <td>{{ c.module }}<div class="muted">{{ c.trigger }}{% if c.response_id %} · response #{{ c.response_id }}{% endif %}</div></td>
+      <td><code>{{ c.method }} {{ c.endpoint }}</code>{% if c.http_status %} <span class="muted">{{ c.http_status }}</span>{% endif %}</td>
+      <td>{% for a in c.answers %}<div><code>{{ a.id }}</code>{% if a.label is not none %} {{ a.label }}{% endif %}{% if a.confidence is not none %} <span class="muted">{{ '%.2f'|format(a.confidence) }}</span>{% endif %}{% if a.band %} <span class="pill band-{{ a.band }}">{{ a.band }}</span>{% endif %}</div>{% endfor %}</td>
+      <td class="narrow">{{ c.client_ms }}{% if c.latency_ms is not none %}<div class="muted">gateway {{ c.latency_ms }}{% if c.backend_ms is not none %} · model {{ c.backend_ms }}{% endif %}</div>{% endif %}</td>
+      <td>{% if c.fallback %}<span class="pill warn">fallback: {{ c.fallback_reason }}</span>{% endif %}
+          {% if c.cached %}<span class="pill">cached</span>{% endif %}{% if c.truncated %}<span class="pill band-suggest">truncated</span>{% endif %}
+          {% if c.fault %}<span class="pill warn">fault: {{ c.fault }}</span>{% endif %}</td>
+      <td>{{ c.outcome or '' }}</td>
+    </tr>
+  {% else %}<tr><td colspan="8" class="muted">No gateway calls match. With every module off, the baseline never calls the gateway.</td></tr>{% endfor %}
+  </tbody>
+</table>
+{% if not embed %}<form method="post" action="/inspector/clear" data-confirm="Clear the whole call log?"><button class="link danger">Clear the call log</button></form>{% endif %}
+{% endblock %}

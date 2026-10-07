@@ -1,0 +1,41 @@
+{% extends "project_base.html" %}
+{% block content %}
+{% for page in pages %}
+<section class="card">
+  <h2>Page {{ page.ord }}</h2>
+  <table>
+    <tbody>
+    {% for q in questions if q.page_id == page.id %}
+      <tr>
+        <td class="narrow"><code>{{ q.qid }}</code></td>
+        <td><a href="/design/{{ project.survey_no }}/q/{{ q.id }}">{{ q.wording }}</a>
+          {% if q.options %}<div class="muted">{{ q.options|map(attribute='text')|join(' · ') }}</div>{% endif %}</td>
+        <td>{{ QUESTION_TYPES[q.type] }}{% if q.type == 'metric' %} ({{ METRICS[q.metric_kind][0] }}){% endif %}</td>
+        <td>
+          {% if q.required != 'none' %}<span class="pill">{{ REQUIRED_MODES[q.required] }}</span>{% endif %}
+          {% if q.is_followup %}<span class="pill">Follow-up{% if q.parent_qid %} of {{ q.parent_qid }}{% endif %}</span>{% endif %}
+          {% if q.qid in class_sets and module_on('shared_classes') %}<span class="pill {{ 'warn' if class_sets[q.qid].dirty else 'ok' }}">Classes{{ ' (draft)' if class_sets[q.qid].dirty }}</span>{% endif %}
+          {% if hints[q.id] %}<span class="pill band-suggest">{{ hints[q.id] }} hint{{ 's' if hints[q.id] > 1 }}</span>{% endif %}
+        </td>
+      </tr>
+    {% else %}<tr><td class="muted">No questions on this page.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  <details>
+    <summary>Add a question to page {{ page.ord }}</summary>
+    <form method="post" action="/design/{{ project.survey_no }}/questions" class="stack">
+      <input type="hidden" name="page_id" value="{{ page.id }}">
+      <label>Wording <input name="wording" required></label>
+      <div class="row">
+        <label>Type <select name="type">{% for k, v in QUESTION_TYPES.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></label>
+        <label>Metric <select name="metric_kind">{% for k, v in METRICS.items() %}<option value="{{ k }}">{{ v[0] }}</option>{% endfor %}</select></label>
+        <label>Response <select name="required">{% for k, v in REQUIRED_MODES.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></label>
+      </div>
+      <label>Answer options, one per line (Radio Button and Check Box) <textarea name="options" rows="3"></textarea></label>
+      <div class="row"><button>Save question</button></div>
+    </form>
+  </details>
+</section>
+{% endfor %}
+<form method="post" action="/design/{{ project.survey_no }}/pages"><button class="ghost">Add a page</button></form>
+{% endblock %}

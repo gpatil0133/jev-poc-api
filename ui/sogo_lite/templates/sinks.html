@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Outbox and logs{% endblock %}
+{% block content %}
+<h1>Outbox and logs</h1>
+<p class="muted">Everything Rules &amp; Alerts would send is written here instead. Nothing leaves the mock.
+  Alert emails today: <strong>{{ today }}</strong> (the real product's limit of 5,000 a day per account is not enforced).</p>
+<nav class="tabs">
+  {% for k, v in {'email': 'Email outbox', 'webhook': 'Webhook log', 'salesforce': 'Salesforce log'}.items() %}
+  <a class="{{ 'on' if sink == k }}" href="/sinks?sink={{ k }}{% if survey_no %}&survey_no={{ survey_no }}{% endif %}">{{ v }} ({{ counts.get(k, 0) }})</a>
+  {% endfor %}
+</nav>
+{% if survey_no %}<p>Project {{ survey_no }} only. <a href="/sinks?sink={{ sink }}">Show all projects</a></p>{% endif %}
+<table>
+  <thead><tr><th>When</th><th>Project</th><th>Rule</th><th>{{ 'Email' if sink == 'email' else 'Payload' }}</th><th>Test-bench link</th></tr></thead>
+  <tbody>
+  {% for e in entries %}
+    <tr>
+      <td class="narrow">{{ e.created_at }}</td>
+      <td>{{ e.project }}{% if e.anonymous %} <span class="pill">Anonymous</span>{% endif %}</td>
+      <td>{{ e.rule }}</td>
+      <td>{% if sink == 'email' %}<div><strong>To:</strong> {{ e.payload.to }}</div><div><strong>{{ e.payload.subject }}</strong></div><pre class="plain">{{ e.payload.body }}</pre>
+          {% else %}<pre>{{ e.payload|pretty }}</pre>{% endif %}</td>
+      <td class="narrow"><a href="/responses/{{ e.survey_no }}/r/{{ e.response_id }}">response #{{ e.response_id }}</a></td>
+    </tr>
+  {% else %}<tr><td colspan="5" class="muted">Nothing here yet.</td></tr>{% endfor %}
+  </tbody>
+</table>
+<p class="muted">The last column is the mock's own bookkeeping. It is not part of what would be sent.</p>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Call #{{ call.id }}{% endblock %}
+{% block content %}
+<p><a href="/inspector">← Inspector</a></p>
+<h1>Call #{{ call.id }} <small><code>{{ call.method }} {{ call.endpoint }}</code></small></h1>
+<dl class="facts">
+  <dt>Time</dt><dd>{{ call.ts }}</dd>
+  <dt>Module</dt><dd>{{ call.module }}</dd>
+  <dt>Trigger</dt><dd>{{ call.trigger }}{% if call.survey_no %} · project {{ call.survey_no }}{% endif %}{% if call.response_id %} · <a href="/responses/{{ call.survey_no }}/r/{{ call.response_id }}">response #{{ call.response_id }}</a>{% endif %}</dd>
+  <dt>HTTP status</dt><dd>{{ call.http_status or 'not sent, or no reply' }}</dd>
+  <dt>Latency</dt><dd>{{ call.client_ms }} ms round trip measured by the client{% if call.latency_ms is not none %} · {{ call.latency_ms }} ms in the gateway{% endif %}{% if call.backend_ms is not none %} · {{ call.backend_ms }} ms in the model{% endif %} · call type {{ call.kind }}</dd>
+  <dt>Flags</dt><dd>{% if call.fallback %}<span class="pill warn">fallback: {{ call.fallback_reason }}</span>{% else %}<span class="pill ok">answered</span>{% endif %}
+    {% if call.cached %}<span class="pill">cached</span>{% endif %}{% if call.truncated %}<span class="pill band-suggest">truncated</span>{% endif %}</dd>
+  <dt>Fault applied</dt><dd>{% if call.fault %}<span class="pill warn">{{ call.fault }}</span>{% if 'forced_low_confidence' in call.fault %} The bands below were rewritten to <code>none</code> after the response arrived; <code>_original_band</code> holds what the gateway said.{% endif %}{% else %}none{% endif %}</dd>
+  <dt>Question hash</dt><dd><code>{{ call.question_hash or '–' }}</code></dd>
+  <dt>Outcome</dt><dd>{{ call.outcome or '–' }}</dd>
+</dl>
+{% if call.answers %}
+<table>
+  <thead><tr><th>Answer</th><th>Label</th><th>Confidence</th><th>Band</th></tr></thead>
+  <tbody>{% for a in call.answers %}<tr><td><code>{{ a.id }}</code></td><td>{{ a.label if a.label is not none }}</td><td>{{ '%.2f'|format(a.confidence) if a.confidence is not none }}</td>
+    <td>{% if a.band %}<span class="pill band-{{ a.band }}">{{ a.band }}</span>{% endif %}{% if a.forced %} <span class="pill warn">forced</span>{% endif %}</td></tr>{% endfor %}</tbody>
+</table>
+{% endif %}
+<div class="two">
+  <section><h2>Request <small>token removed</small></h2><pre>{{ call.request|pretty if call.request else 'no body' }}</pre></section>
+  <section><h2>Response</h2><pre>{{ call.response|pretty }}</pre></section>
+</div>
+{% if can_compile %}
+<section id="compiled">
+  <form method="post" action="/inspector/{{ call.id }}/compiled"><button class="ghost">Show compiled request</button>
+    <span class="muted">dry run through <code>/v1/tasks/compile</code>: what this question set sends to the model</span></form>
+  {% if compiled %}
+    {% if compiled.fallback %}<p class="banner warn">Compile failed: {{ compiled.fallback_reason }}</p>{% endif %}
+    <pre>{{ compiled.response|pretty }}</pre>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Create with AI{% endblock %}
+{% block content %}
+<h1>Create with AI</h1>
+<p class="muted">A stub: no LLM is called. One canned question set per project type, plus a generic one.
+{% if module_on('template_pick') %}Scope 7 is on: the prompt is classified into a project type and that type's template is used when the band is <code>act</code>.
+{% else %}Scope 7 is off: the generic template is always used.{% endif %}</p>
+<form method="post" action="/create-ai" class="card stack">
+  <label>Describe the project <textarea name="prompt" rows="3" required>{{ prompt }}</textarea></label>
+  <div class="row"><button>Generate</button></div>
+</form>
+{% if result %}
+{% set d = result.decision %}
+<section class="card">
+  <h2>Result</h2>
+  <dl class="facts">
+    <dt>Project type detected</dt>
+    <dd>{% if not d.checked %}<span class="muted">not checked (module off)</span>
+        {% elif d.fallback %}<span class="pill warn">no answer: {{ d.fallback }}</span>
+        {% else %}{{ d.detected or 'none' }} <span class="pill band-{{ d.band }}">{{ d.band }}</span>
+          confidence {{ '%.2f'|format(d.confidence or 0) }}{% if d.forced %} <span class="pill warn">band forced to none by a fault switch</span>{% endif %}{% endif %}</dd>
+    <dt>Template used</dt><dd><strong>{{ d.template }}</strong>{% if d.template == 'generic' and d.checked %} (the fallback path){% endif %}</dd>
+    <dt>Project</dt><dd><a href="/design/{{ result.survey_no }}">Open #{{ result.survey_no }} in Design</a></dd>
+  </dl>
+  <ol>{% for q in result.questions %}<li>{{ q.wording }} <span class="muted">({{ QUESTION_TYPES[q.type] }})</span></li>{% endfor %}</ol>
+</section>
+{% endif %}
+{% endblock %}

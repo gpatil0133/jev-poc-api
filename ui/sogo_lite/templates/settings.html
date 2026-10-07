@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<h1>Settings</h1>
+<section class="card">
+  <h2>Gateway</h2>
+  <dl class="facts">
+    <dt>Base URL</dt><dd><code>{{ health.base_url }}</code> <span class="muted">from <code>config.json</code></span></dd>
+    <dt>Status</dt><dd>{% if health.reachable %}<span class="pill ok">{{ health.status }}</span> backend <strong>{{ health.backend }}</strong> · models: {{ health.loaded|join(', ') or 'none' }} on {{ health.device }} · {{ health.tasks }} catalog tasks · {{ health.cache_entries }} cache entries
+        {% else %}<span class="pill warn">unreachable</span> {{ health.error }}{% endif %}</dd>
+    <dt>Token</dt><dd>{% if not token_present %}<span class="pill warn">missing</span> set <code>{{ TOKEN_ENV }}</code> in the environment and restart
+        {% elif health.token == 'rejected' %}<span class="pill warn">gateway token rejected</span>
+        {% elif health.token == 'ok' %}<span class="pill ok">accepted</span>
+        {% else %}<span class="pill">set, not used yet</span>{% endif %} <span class="muted">read from the environment only; never stored or logged</span></dd>
+    <dt>Timeouts</dt><dd>{% for k, v in timeouts.items() %}{{ k }} {{ v }} ms{{ ' · ' if not loop.last }}{% endfor %} <span class="muted">from <code>config.json</code></span></dd>
+    <dt>Database</dt><dd><code>{{ db_file }}</code></dd>
+  </dl>
+  <div class="row">
+    <form method="post" action="/settings/test-call"><button>Test call</button></form>
+    <form method="post" action="/settings/sync"><button class="ghost">Save unsynced class sets to the gateway ({{ unsynced }})</button></form>
+    <a class="button ghost" href="/jobs">Jobs polling test</a>
+  </div>
+  <p class="muted">The test call sends one fixed inline <code>choice</code> question to <code>POST /v1/classify</code> and opens it in the Inspector.</p>
+</section>
+
+<section class="card">
+  <h2>Scope modules</h2>
+  <form method="post" action="/settings/modules">
+    <table>
+      <thead><tr><th>On</th><th>Scope</th><th>Where it shows up</th></tr></thead>
+      <tbody>{% for m in MODULES %}
+        <tr><td><input type="checkbox" name="{{ m.id }}" value="1" {{ 'checked' if states[m.id] }} aria-label="{{ m.name }}"></td>
+            <td>{{ m.n }}. {{ m.name }}</td><td class="muted">{{ m.where }}</td></tr>
+      {% endfor %}</tbody>
+    </table>
+    <button>Save modules</button>
+  </form>
+  <p class="muted">Turning a module off removes its panel and stops its handlers; its stored data stays. With every module off, the mock behaves like today's product and the Inspector stays empty.</p>
+</section>
+
+<section class="card">
+  <h2>Fault switches</h2>
+  <form method="post" action="/settings/faults">
+    <table>
+      <thead><tr><th>Switch</th><th>Applies to</th><th>Effect</th></tr></thead>
+      <tbody>{% for f in faults %}
+        <tr><td>{{ f.name }}</td>
+            <td><select name="{{ f.id }}" aria-label="{{ f.name }}">
+              <option value="">off</option><option value="all" {{ 'selected' if fault_values[f.id] == 'all' }}>all modules</option>
+              {% for m in MODULES %}<option value="{{ m.id }}" {{ 'selected' if fault_values[f.id] == m.id }}>{{ m.n }} {{ m.name }}</option>{% endfor %}
+            </select>{% if f.id == 'slow' %} <label>delay <input name="slow_ms" size="5" value="{{ fault_values.slow_ms }}"> ms</label>{% endif %}</td>
+            <td class="muted">{{ f.effect }}</td></tr>
+      {% endfor %}</tbody>
+    </table>
+    <button>Save fault switches</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Seed data</h2>
+  <form method="post" action="/settings/reseed" data-confirm="Reset every project, response and the call log back to the seed data?">
+    <button class="ghost danger">Restore seed data</button>
+    <span class="muted">Deletes all projects, responses, outbox entries and the call log, then seeds the six example projects again. Module toggles and fault switches are kept.</span>
+  </form>
+</section>
+{% endblock %}

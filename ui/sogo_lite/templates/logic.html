@@ -1,0 +1,69 @@
+{% extends "project_base.html" %}
+{% block content %}
+<section class="card">
+  <h2>Logic rules</h2>
+  <table><tbody>
+  {% for r in rules %}
+    <tr><td>{{ r.text }}{% if r.inactive %} <span class="pill">inactive: module off</span>{% endif %}</td>
+        <td class="actions"><form method="post" action="/design/{{ project.survey_no }}/logic/{{ r.id }}/delete"><button class="link danger">Delete</button></form></td></tr>
+  {% else %}<tr><td class="muted">No rules. Every question is shown and pages follow in order.</td></tr>{% endfor %}
+  </tbody></table>
+  <p class="muted">A question that a "show" rule targets is hidden until one of its rules is met. Put the target on a later page than the source.</p>
+</section>
+<section class="card">
+  <h2>Add a rule</h2>
+  <form method="get" class="row">
+    <label>When the answer to <select name="src" data-autosubmit>
+      <option value="">choose a question…</option>
+      {% for q in questions %}<option value="{{ q.qid }}" {{ 'selected' if source and source.qid == q.qid }}>{{ q.qid }} (page {{ q.page_ord }}): {{ q.wording }}</option>{% endfor %}
+    </select></label>
+    <noscript><button>Choose</button></noscript>
+  </form>
+  {% if source %}
+  {% macro targets() %}
+    <label>Action <select name="action"><option value="show">show a question</option><option value="jump">jump to a page</option></select></label>
+    <label>Question to show <select name="target_q"><option value="">—</option>{% for q in questions if q.qid != source.qid %}<option value="{{ q.qid }}">{{ q.qid }} (page {{ q.page_ord }}): {{ q.wording }}</option>{% endfor %}</select></label>
+    <label>or page to jump to <select name="target_page"><option value="">—</option>{% for p in pages if p.ord > source.page_ord %}<option>{{ p.ord }}</option>{% endfor %}</select></label>
+  {% endmacro %}
+  {% if source.type in ('radio', 'checkbox') %}
+  <form method="post" action="/design/{{ project.survey_no }}/logic" class="row">
+    <input type="hidden" name="source_qid" value="{{ source.qid }}">
+    <label>Condition <select name="op">{% for k, v in option_ops.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></label>
+    <label>Option <select name="option_id">{% for o in source.options %}<option value="{{ o.id }}">{{ o.text }}</option>{% endfor %}</select></label>
+    {{ targets() }}<button>Add rule</button>
+  </form>
+  {% elif source.type == 'text' %}
+  <form method="post" action="/design/{{ project.survey_no }}/logic" class="row">
+    <input type="hidden" name="source_qid" value="{{ source.qid }}">
+    <label>Condition <select name="op">{% for k, v in text_ops.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></label>
+    <label>Text <input name="operand"></label>
+    {{ targets() }}<button>Add rule</button>
+  </form>
+  {% if about_on %}
+  <h3>{{ about_label }} <small>scope 3</small></h3>
+  <form method="post" action="/design/{{ project.survey_no }}/logic" class="stack">
+    <input type="hidden" name="source_qid" value="{{ source.qid }}">
+    <input type="hidden" name="op" value="about">
+    <div class="row">
+      <label class="check"><input type="radio" name="about_source" value="topic" checked> a topic I type</label>
+      <label>Topic <input name="topic" placeholder="price"></label>
+      <label class="grow">What it covers (optional) <input name="description" placeholder="cost, fees, too expensive, value for money"></label>
+    </div>
+    <div class="row">
+      <label class="check"><input type="radio" name="about_source" value="class" {{ 'disabled' if not class_refs }}> a class from this question's class set</label>
+      <label><select name="class_ref">{% for r in class_refs %}<option value="{{ r.ref }}">{{ r.text }}</option>{% else %}<option value="">no classes defined yet</option>{% endfor %}</select></label>
+    </div>
+    <div class="row">
+      <label>Show question <select name="target_q" required><option value="">—</option>{% for q in questions if q.page_ord > source.page_ord %}<option value="{{ q.qid }}">{{ q.qid }} (page {{ q.page_ord }}): {{ q.wording }}</option>{% endfor %}</select></label>
+      <label>Minimum probability <input name="min_prob" size="4" value="0.60"></label>
+      <button>Add rule</button>
+    </div>
+    <p class="muted">A typed topic is added to the question's class set as a yes/no question. Leave the minimum probability empty to use the gateway's band. A meaning condition can only show a question, never skip one. On a timeout, an error, low confidence or Offline Mode the survey follows the default path.</p>
+  </form>
+  {% elif not module_on('logic_text') %}<p class="muted">"answer is about…" is off (scope 3 module).</p>{% endif %}
+  {% else %}
+  <p class="muted">A metric question's score triggers its follow-up; set that on the follow-up Text Box in the question editor. To branch on what the follow-up comment is about, choose the Text Box as the source.</p>
+  {% endif %}
+  {% endif %}
+</section>
+{% endblock %}

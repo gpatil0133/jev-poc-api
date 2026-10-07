@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{{ project.name }}{% endblock %}
+{% block content %}
+<section class="card survey">
+  <p class="muted">{{ project.name }} · page {{ response.page_ord }} of {{ pages }}{% if response.offline %} · <span class="pill">Offline Mode</span>{% endif %}</p>
+  {% if missing %}<p class="banner warn">Please answer the questions marked as required.</p>{% endif %}
+  {% if encouraged %}<p class="banner">You have left a question blank. You can answer it now, or click Next again to continue.</p>{% endif %}
+  <form method="post" action="/take/r/{{ response.id }}" class="stack">
+    {% if encouraged %}<input type="hidden" name="reminded" value="1">{% endif %}
+    {% for q in questions %}
+    {% set a = provided.get(q.qid) or {} %}
+    <fieldset class="question {{ 'missing' if q.qid in missing or q.qid in encouraged }}">
+      <legend>{{ q.wording }}{% if q.required == 'mandatory' %} <span class="req" title="Mandatory">*</span>{% endif %}</legend>
+      {% if q.type == 'radio' %}
+        {% for o in q.options %}<label class="check"><input type="radio" name="q_{{ q.qid }}" value="{{ o.id }}" {{ 'checked' if o.id in (a.option_ids or []) }}> {{ o.text }}</label>{% endfor %}
+      {% elif q.type == 'checkbox' %}
+        {% for o in q.options %}<label class="check"><input type="checkbox" name="q_{{ q.qid }}" value="{{ o.id }}" {{ 'checked' if o.id in (a.option_ids or []) }}> {{ o.text }}</label>{% endfor %}
+      {% elif q.type == 'metric' %}
+        <div class="scale">{% for n in range(q.low, q.high + 1) %}<label><input type="radio" name="q_{{ q.qid }}" value="{{ n }}" {{ 'checked' if a.number == n }}><span>{{ n }}</span></label>{% endfor %}</div>
+      {% else %}
+        <textarea name="q_{{ q.qid }}" rows="3">{{ a.text or '' }}</textarea>
+      {% endif %}
+    </fieldset>
+    {% endfor %}
+    <div class="row"><button>Next</button></div>
+  </form>
+</section>
+{% endblock %}

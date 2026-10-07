@@ -26,6 +26,7 @@ BUSY_RETRIES = 3
 
 
 class LayaBackend:
+    name = "laya"
     max_batch_states = MAX_BATCH_STATES
 
     def __init__(self, base_url: str, api_key: str = "", batch_timeout_s: float = 60.0):

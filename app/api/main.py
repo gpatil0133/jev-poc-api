@@ -12,10 +12,11 @@ from typing import Any, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 
-from app.backends.base import BackendError
+from app.backends.base import BackendError, DecisionBackend
+from app.backends.jev import JevBackend
 from app.backends.laya import LayaBackend
 from app.core.auth import assert_production_safety, get_tenant_id
-from app.core.config import get_settings
+from app.core.config import Settings, get_settings
 from app.models.schemas import (
     BatchRequest, BatchResponse, Binding, BindingSaved, ClassifyRequest, ClassifyResponse,
     CompileRequest, CompileResponse, JobStatus, MapColumnsRequest, MapColumnsResponse,
@@ -33,6 +34,17 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 logger = logging.getLogger(__name__)
 
 
+def _make_backend(settings: Settings) -> DecisionBackend:
+    """BACKEND=laya | jev picks the model behind the gateway. Read once at start-up."""
+    if settings.backend == "jev":
+        if not settings.typesafe_api_key:
+            raise RuntimeError("BACKEND=jev needs TYPESAFE_API_KEY.")
+        return JevBackend(settings.typesafe_base_url, settings.typesafe_api_key,
+                          settings.typesafe_default_model, settings.batch_timeout_s,
+                          settings.jev_max_concurrent)
+    return LayaBackend(settings.laya_base_url, settings.laya_api_key, settings.batch_timeout_s)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
@@ -40,7 +52,7 @@ async def lifespan(app: FastAPI):
     backend = getattr(app.state, "backend", None)      # tests inject a fake
     owns_backend = backend is None
     if owns_backend:
-        backend = LayaBackend(settings.laya_base_url, settings.laya_api_key, settings.batch_timeout_s)
+        backend = _make_backend(settings)
     registry = load_registry()
     service = ClassifyService(
         backend, registry, BindingStore(settings.data_dir), settings,
@@ -51,7 +63,9 @@ async def lifespan(app: FastAPI):
     app.state.service = service
     app.state.jobs = JobRunner(service, settings.data_dir, settings.batch_max_items)
     app.state.mapping = MappingService(service)
-    logger.info("Gateway ready: laya=%s tasks=%s", settings.laya_base_url, len(registry.ids()))
+    logger.info("Gateway ready: backend=%s url=%s tasks=%s", backend.name,
+                settings.typesafe_base_url if backend.name == "jev" else settings.laya_base_url,
+                len(registry.ids()))
     yield
     await app.state.jobs.shutdown()
     if owns_backend:
@@ -98,6 +112,8 @@ async def health(request: Request) -> dict[str, Any]:
     laya = await request.app.state.backend.health()
     return {
         "status": "ok" if laya.get("status") == "ok" else "degraded",
+        "backend": request.app.state.backend.name,
+        # The key keeps its name for existing callers; it holds the active backend's health.
         "laya": laya,
         "tasks": len(request.app.state.registry.ids()),
         "cache_entries": len(request.app.state.service.cache),

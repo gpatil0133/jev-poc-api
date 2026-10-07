@@ -1,0 +1,34 @@
+﻿row_id,field,typed_answer,expected_category,difficulty
+FT001,job_title,Sr. Eng. Manager,senior_management,paraphrase
+FT002,job_title,Asst. Director of Ops,director,paraphrase
+FT003,job_title,freelance,cant_tell,easy
+FT004,job_title,Software Engineer II,individual_contributor,easy
+FT005,job_title,"VP Sales, EMEA",executive,paraphrase
+FT006,job_title,CFO,executive,easy
+FT007,job_title,"Team Lead, Customer Support",manager,easy
+FT008,job_title,Store Mgr,manager,paraphrase
+FT009,job_title,Head of Procurement,senior_management,easy
+FT010,job_title,Dir. of Marketing,director,paraphrase
+FT011,job_title,Founder & CEO,executive,easy
+FT012,job_title,Nurse,individual_contributor,easy
+FT013,job_title,Accounts Payable Clerk,individual_contributor,easy
+FT014,job_title,retired,cant_tell,easy
+FT015,job_title,Managing Director,executive,tricky
+FT016,job_title,n/a,cant_tell,easy
+FT017,job_title,Shift Supervisor,manager,easy
+FT018,job_title,Senior Analyst,individual_contributor,tricky
+FT019,industry,NHS trust,healthcare,tricky
+FT020,industry,dental practice,healthcare,easy
+FT021,industry,primary school,education,easy
+FT022,industry,fintech startup,financial_services,tricky
+FT023,industry,SaaS,technology,paraphrase
+FT024,industry,car parts factory,manufacturing,easy
+FT025,industry,boutique hotel,hospitality,easy
+FT026,industry,city council,public_sector,easy
+FT027,industry,insurance broker,financial_services,easy
+FT028,industry,coffee shop,hospitality,paraphrase
+FT029,industry,online clothing store,retail,easy
+FT030,industry,uni,education,paraphrase
+FT031,industry,self employed,cant_tell,easy
+FT032,industry,logistics,cant_tell,tricky
+FT033,industry,credit union,financial_services,paraphrase

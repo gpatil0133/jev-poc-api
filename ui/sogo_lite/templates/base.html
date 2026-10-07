@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Sogo-lite{% endblock %} · Sogo-lite</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="{{ 'embed' if embed else '' }}">
+{% if not embed %}
+<header class="top">
+  <a class="brand" href="/">Sogo-lite <span>mock platform</span></a>
+  <nav>
+    <a href="/">Projects</a>
+    <a href="/create-ai">Create with AI</a>
+    <a href="/sinks">Outbox &amp; logs</a>
+    <a href="/inspector">Inspector</a>
+    <a href="/scenarios">Scenarios</a>
+    <a href="/settings">Settings</a>
+  </nav>
+  <div class="status">
+    {% for name in faults_on %}<span class="pill warn" title="Fault switch is on">{{ name }}</span>{% endfor %}
+    <a id="gateway-status" class="pill" href="/settings" title="{{ gateway_url }}">gateway…</a>
+    <button type="button" id="panel-toggle" class="ghost" title="Show the Inspector beside this page">Inspector panel</button>
+  </div>
+</header>
+{% if not token_present %}
+<div class="banner warn">No gateway token: <code>{{ TOKEN_ENV }}</code> is not set, so every gateway call falls back with reason <code>no_token</code>. Set it and restart the app.</div>
+{% endif %}
+{% endif %}
+<div class="layout">
+  <main>
+    {% if msg %}<div class="flash">{{ msg }}</div>{% endif %}
+    {% block subnav %}{% endblock %}
+    {% block content %}{% endblock %}
+  </main>
+  {% if not embed %}<aside id="panel" hidden><iframe title="Inspector" data-src="/inspector?embed=1"></iframe></aside>{% endif %}
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "gateway_base_url": "http://192.168.0.171:8010",
+  "db_path": "data/sogo_lite.db",
+  "http_margin_ms": 250,
+  "timeouts_ms": {
+    "respondent": 300,
+    "submit": 2000,
+    "author": 1500,
+    "batch": 30000
+  }
+}

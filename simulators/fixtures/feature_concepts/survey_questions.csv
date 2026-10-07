@@ -1,0 +1,29 @@
+﻿row_id,question_text,answer_options,expected_flaw,expected_type,difficulty
+SQ001,How great was our friendly staff?,1 to 5 stars,leading,rating,easy
+SQ002,Was the store clean and easy to navigate?,Yes; No,double_barrelled,yes_no,easy
+SQ003,How long have you been a customer?,0-5 years; 5-10 years; 10+ years,overlapping_options,multiple_choice,easy
+SQ004,How likely are you to recommend Harbour & Pine to a friend or colleague?,0 to 10,fine,nps,easy
+SQ005,Do you shop with us regularly?,Yes; No,vague_time_frame,yes_no,easy
+SQ006,How would you rate the omnichannel fulfilment experience of your BOPIS order?,1 to 5,jargon,rating,easy
+SQ007,What is your annual household income?,Under 30k; 30k-60k; 60k-100k; Over 100k,sensitive,multiple_choice,easy
+SQ008,How would you rate our staff?,1 to 5 stars,fine,rating,easy
+SQ009,Don't you agree that our new store layout is much better?,Yes; No,leading,yes_no,easy
+SQ010,How satisfied are you with the price and quality of your purchase?,1 to 5,double_barrelled,rating,easy
+SQ011,Which of these did you use today?,Click and collect; Design desk; Cafe; Returns counter,fine,multiple_choice,easy
+SQ012,What is the main reason for your score?,(text box),fine,open_text,easy
+SQ013,Have you visited us recently?,Yes; No,vague_time_frame,yes_no,easy
+SQ014,What is your age?,Under 18; 18-25; 25-35; 35-50; 50+,overlapping_options,multiple_choice,tricky
+SQ015,Please rate each of the following aspects of your visit.,"Rows: Staff, Cleanliness, Range, Checkout. Scale: Poor to Excellent",fine,matrix,easy
+SQ016,Do you have any health conditions that affect how you shop?,Yes; No,sensitive,yes_no,easy
+SQ017,How did our award-winning delivery service exceed your expectations?,(text box),leading,open_text,paraphrase
+SQ018,Did the SKU availability on the PDP match in-store inventory?,Yes; No,jargon,yes_no,easy
+SQ019,Was your order delivered on the date you were given?,Yes; No,fine,yes_no,easy
+SQ020,How easy was it to find what you needed and pay for it?,1 to 5,double_barrelled,rating,paraphrase
+SQ021,How much do you spend with us?,Under $50; $50 to $100; Over $100,vague_time_frame,multiple_choice,tricky
+SQ022,How many people live in your household?,1-2; 2-4; 4 or more,overlapping_options,multiple_choice,tricky
+SQ023,Is there anything else you would like to tell us?,(text box),fine,open_text,easy
+SQ024,How satisfied were you with the assembly service?,Very dissatisfied to Very satisfied,fine,rating,easy
+SQ025,What is your religion?,Christian; Muslim; Hindu; Jewish; None; Other,sensitive,multiple_choice,easy
+SQ026,"How would you rate the following: delivery speed, packaging, driver courtesy?",Scale: Poor to Excellent for each,fine,matrix,paraphrase
+SQ027,"Considering our CSAT uplift initiatives, how was your CX?",1 to 5,jargon,rating,easy
+SQ028,Which store did you visit?,Northgate; Riverside; Downtown,fine,multiple_choice,easy
