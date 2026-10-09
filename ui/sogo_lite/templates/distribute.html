@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Distribute{% endblock %}
+{% block content %}
+<h1>Distribute <small>a stand-in for Directories, Activities and email invitations</small></h1>
+<p class="muted">The mock has no Distribute module. This page holds just enough of one to try two feature concepts: holding an invitation when the contact's latest Activity note says it is a bad time, and acting on replies to invitation emails. Sent emails go to the <a href="/sinks">outbox</a>; nothing leaves the mock.</p>
+
+<section class="card">
+  <h2>Contacts</h2>
+  <table>
+    <thead><tr><th>Contact</th><th>Latest Activity note</th><th>State</th><th>Add an Activity note</th></tr></thead>
+    <tbody>{% for c in contacts %}
+      <tr><td>{{ c.name }} <span class="muted">{{ c.email }}</span></td>
+          <td>{% if c.note %}{{ c.note.note }} <span class="muted">{{ c.note.created_at }}</span>{% else %}<span class="muted">none</span>{% endif %}</td>
+          <td>{% if c.unsubscribed %}<span class="pill warn">unsubscribed</span>{% endif %}{% if c.flagged %}<span class="pill warn">{{ c.flagged }}</span>{% endif %}</td>
+          <td><form method="post" action="/distribute" class="row tight"><input type="hidden" name="contact_id" value="{{ c.id }}"><input name="note" placeholder="free-text note"><button name="action" value="activity" class="ghost">Add</button></form></td></tr>
+    {% else %}<tr><td colspan="4" class="muted">No contacts.</td></tr>{% endfor %}</tbody>
+  </table>
+  <form method="post" action="/distribute" class="row">
+    <label>Name <input name="name"></label><label>Email <input name="email" type="email"></label>
+    <label class="grow">Activity note (optional) <input name="note"></label>
+    <button name="action" value="contact" class="ghost">Add contact</button>
+  </form>
+</section>
+
+<section class="card" id="invitations">
+  <h2>Invitations <small>invitation hold</small></h2>
+  {% if not hold_on %}<p class="banner warn">The Invitation hold module is off: Activity notes are not read and every subscribed contact is invited, as today.</p>{% endif %}
+  <form method="post" action="/distribute" class="row">
+    <label>Invite every contact to <select name="survey_no">{% for p in projects %}<option value="{{ p.survey_no }}">#{{ p.survey_no }} {{ p.name }}</option>{% endfor %}</select></label>
+    <button name="action" value="queue">Send invitations</button>
+  </form>
+  <p class="muted">Unsubscribed and flagged contacts are left out by a plain rule. For the rest, the latest note is read: send, hold or don't send. Only a confident answer changes anything; on an unsure answer, a timeout or an error the invitation goes out, as it does today.</p>
+  <table>
+    <thead><tr><th>When</th><th>Contact</th><th>Project</th><th>Decision</th><th>Why</th><th>Classifier</th></tr></thead>
+    <tbody>{% for i in invitations %}
+      <tr><td class="narrow">{{ i.created_at }}</td><td>{{ i.name }}</td><td>{{ i.project }}</td>
+          <td><span class="pill {{ {'sent': 'ok', 'held': 'band-suggest'}.get(i.status, 'warn') }}">{{ statuses[i.status] }}</span></td>
+          <td>{{ i.reason }}</td>
+          <td>{% if i.label %}{{ i.label }} {{ '%.2f'|format(i.confidence or 0) }} <span class="pill band-{{ i.band }}">{{ i.band }}</span>{% endif %}{% if i.log_id %} <a href="/inspector/{{ i.log_id }}">#{{ i.log_id }}</a>{% endif %}</td></tr>
+    {% else %}<tr><td colspan="6" class="muted">No invitations yet.</td></tr>{% endfor %}</tbody>
+  </table>
+</section>
+
+<section class="card" id="replies">
+  <h2>Replies to invitation emails <small>invitation replies</small></h2>
+  {% if not reply_on %}<p class="banner warn">The Invitation replies module is off: a reply is kept and nothing is done with it.</p>{% endif %}
+  <form method="post" action="/distribute" class="stack">
+    <div class="row">
+      <label>Reply from <select name="contact_id">{% for c in contacts %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select></label>
+      <label class="grow">Reply text <input name="text" placeholder="Please take me off your list."></label>
+      <button name="action" value="reply">Receive reply</button>
+    </div>
+    <p class="muted">Whether replies to invitation emails reach Sogolytics today is an open question, so a reply is pasted in here. Unsubscribe requests are acted on even when only likely; everything else needs a confident answer, or it stays for a person.</p>
+  </form>
+  <table>
+    <thead><tr><th>When</th><th>From</th><th>Reply</th><th>Kind</th><th>What was done</th></tr></thead>
+    <tbody>{% for r in replies %}
+      <tr><td class="narrow">{{ r.created_at }}</td><td>{{ r.name }}</td><td>{{ r.text }}</td>
+          <td>{% if r.label %}{{ labels.get(r.label, r.label) }} {{ '%.2f'|format(r.confidence or 0) }} <span class="pill band-{{ r.band }}">{{ r.band }}</span>{% endif %}{% if r.log_id %} <a href="/inspector/{{ r.log_id }}">#{{ r.log_id }}</a>{% endif %}</td>
+          <td>{{ r.action }}</td></tr>
+    {% else %}<tr><td colspan="5" class="muted">No replies yet.</td></tr>{% endfor %}</tbody>
+  </table>
+</section>
+{% endblock %}

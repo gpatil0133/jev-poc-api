@@ -136,6 +136,21 @@ answer. `tasks.json` holds the question definitions, `requests/*.jsonl` one
 Rebuild with `python -m simulators.build_feature_dataset`. It is for trying ideas
 and tuning option wording, not for accuracy numbers.
 
+The same rows are also seven eval sets (`fc_comments`, `fc_followups`,
+`fc_questions`, `fc_profile`, `fc_identity`, `fc_notes`, `fc_replies`) in
+`simulators/task_eval_set.py`, so `eval_task_quality` and the mock's Evaluation
+page score them like the other sets: `--sets fc_comments,fc_notes`. They are on
+by default, which adds about 400 calls to a full run.
+
+Six of the decisions have fixed options and are catalog tasks:
+`meaning.unresolved_problem`, `design.wording_flaw`, `design.question_type`,
+`ex.identity_risk`, `invite.timing` and `invite.reply_type`. The design and
+invite tasks do not read a survey answer; their state fields (`question`,
+`answer_options`, `activity_note`, `email_reply`) are passed in `context`. The
+other decisions take their options from an account or an author, so they stay
+inline questions. `tests/test_feature_sets.py` sends every row through the
+routes on the fake backend as a dry run.
+
 ## Sogo-lite mock platform
 
 `ui/` is a local stand-in for the Sogolytics Design module that calls this gateway

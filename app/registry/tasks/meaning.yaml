@@ -44,3 +44,15 @@
   state: ["survey_question", "answer"]
   model: auto
   thresholds: {act: 0.85, suggest: 0.60}
+
+# Feature concept "Callback offer": the person need not ask to be contacted.
+- id: meaning.unresolved_problem
+  type: yesno
+  description: "Respondent describes a problem of their own that is still open."
+  instructions: "Does this comment describe a problem that is still unresolved for the person?"
+  criteria:
+    "true":  "a problem of their own that is still open: waiting for a refund, item, fix or reply"
+    "false": "no open problem: praise, a past annoyance, a general opinion, or already resolved"
+  state: ["survey_question", "answer", "metric_score"]
+  model: auto
+  thresholds: {act: 0.85, suggest: 0.60}

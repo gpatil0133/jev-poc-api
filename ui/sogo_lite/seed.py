@@ -10,11 +10,12 @@ import logging
 from typing import Any, Optional
 
 from sogo_lite import db, engine
-from sogo_lite.modules import quiz_scoring, shared_classes
+from sogo_lite.modules import distribution, fix_tracker, owners, quiz_scoring, shared_classes, virtual_questions
 
 logger = logging.getLogger(__name__)
 
 RETAIL, CLINIC, HOTEL, STAFF, QUIZ, LARGE = 9001, 9002, 9003, 9004, 9005, 9006
+HARBOUR = 9007      # the feature concepts
 ALERT_MIN_PROB = 0.70
 LOGIC_MIN_PROB = 0.60
 
@@ -268,10 +269,124 @@ def _large() -> None:
     respond(sn, {product: "Leather corner sofa", quality: 4})
 
 
+# ── the feature concepts: one fictional retailer, Harbour & Pine ────────────
+# The lists and comments are a small cut of simulators/fixtures/feature_concepts.
+
+TEAMS = [
+    ("billing", "invoices, charges, refunds, payment, prices at the till", "billing-lead@example.test"),
+    ("delivery", "couriers, delivery dates, tracking, items damaged or missing on arrival", "delivery-lead@example.test"),
+    ("store_staff", "behaviour, helpfulness or availability of store employees", "stores-lead@example.test"),
+    ("facilities", "car park, building, lifts, lighting, signage", "facilities-lead@example.test"),
+    ("digital", "website, loyalty app, login, online account", "digital-lead@example.test"),
+    ("product", "product quality, defects, assembly, how the item matches its description", "product-lead@example.test"),
+]
+ISSUES = [
+    ("late_delivery", "order arrived after the promised date, or the whole order is overdue"),
+    ("billing_error", "charged the wrong amount, charged twice, or the invoice or statement is wrong"),
+    ("damaged_item", "item arrived broken, cracked, dented or chipped"),
+    ("app_login", "cannot sign in to the loyalty app, or keeps being logged out"),
+]
+SENIORITY = {
+    "individual_contributor": "does the work directly, no people management",
+    "manager": "manages a team, shift or store",
+    "senior_management": "senior manager or head of a function",
+    "director": "director level, including assistant or associate director",
+    "executive": "C-level, vice president, managing director, owner or founder",
+}
+LOYALTY_APP = ("Did the respondent mention the Harbour & Pine loyalty app?", {
+    "yes_negative": "mentions the loyalty or rewards app and is unhappy with it",
+    "yes_positive": "mentions the loyalty or rewards app and is happy with it",
+    "not_mentioned": "does not talk about the loyalty or rewards app"})
+STAFF_SAID = ("Did the respondent say how they found the store staff?", {
+    "staff_good": "says the store staff were helpful, friendly or good",
+    "staff_poor": "says the store staff were unhelpful, rude or hard to find",
+    "not_mentioned": "does not talk about the store staff"})
+# (contact, NPS, comment, job title). A contact who appears twice answered again later.
+HARBOUR_RESPONSES = [
+    ("Ana Ruiz", 3, "The new app keeps logging me out before I can claim my points.", "Sr. Eng. Manager"),
+    ("Ben Okafor", 2, "I have reset my password four times and still cannot sign in to the rewards app.", "Nurse"),
+    ("Chloe Martin", 10, "Love collecting points on the app, it saves me money every week.", "Asst. Director of Ops"),
+    ("Dev Patel", 9, "Got a birthday voucher through the rewards app, lovely touch.", "freelance"),
+    ("Erin Walsh", 4, "Spent twenty minutes circling for a parking space and nearly gave up.", "Store manager"),
+    ("Farid Aziz", 5, "The car park lighting is terrible, I did not feel safe walking back after dark.", "CFO"),
+    ("Grace Liu", 6, "Nowhere to leave the car on a Saturday. Please sort this out.", "Teacher"),
+    ("Hugo Brandt", 3, "Ticket machine swallowed my coins and the barrier would not lift.", "Head of Finance"),
+    ("Imani Cole", 2, "I was charged twice for the same rug and my refund still has not arrived after three weeks.",
+     "Accountant"),
+    ("Jack Byrne", 4, "The invoice shows a price higher than the shelf label, nobody has corrected it.", "Owner"),
+    ("Kira Novak", 1, "My order is ten days overdue and tracking has not moved since Monday.", "Shift supervisor"),
+    ("Leo Santos", 3, "The sofa arrived two weeks late and the driver left it outside in the rain.", "VP Sales"),
+    ("Maya Singh", 2, "The table arrived with a cracked leg and I am still waiting for a replacement.", "Designer"),
+    ("Noah Kim", 9, "Staff in the Riverside store were friendly and knew the products well.", "Team lead"),
+    ("Olga Petrov", 10, "The assistant who helped me pick a rug was brilliant.", "Director of Marketing"),
+    ("Paul Reed", 5, "Could not find anyone on the shop floor to ask about fabric samples.", "Driver"),
+    ("Quinn Hayes", 8, "Good quality cushions, exactly as described.", "Analyst"),
+    ("Rosa Diaz", 7, "The wardrobe took three hours to assemble and one door does not close.", "Managing Director"),
+    ("Sam Turner", 9, "Quick and easy, thanks.", "n/a"),
+    ("Tara Bose", 6, "ok", "Consultant"),
+    ("Imani Cole", 8, "The refund for the rug came through last week, thank you for sorting it.", "Accountant"),
+    ("Kira Novak", 2, "Still no sign of my order and nobody answers the phone. Now I have had to buy elsewhere.",
+     "Shift supervisor"),
+    ("Maya Singh", 9, "Replacement table arrived in perfect condition.", "Designer"),
+    ("Ana Ruiz", 4, "The app still signs me out every time I open it.", "Sr. Eng. Manager"),
+]
+CONTACTS = [
+    ("Ana Ruiz", "ana.ruiz@example.test", "Renewed annual trade account, no issues raised."),
+    ("Ben Okafor", "ben.okafor@example.test", "Complaint escalated to regional manager, awaiting response."),
+    ("Chloe Martin", "chloe.martin@example.test", "Customer's husband passed away last week, account on pause."),
+    ("Dev Patel", "dev.patel@example.test", "Asked not to be contacted for any reason other than open orders."),
+    ("Erin Walsh", "erin.walsh@example.test", "Collected click-and-collect order, all fine."),
+    ("Farid Aziz", "farid.aziz@example.test",
+     "Solicitor's letter received regarding injury claim in store, all contact via legal."),
+    ("Grace Liu", "grace.liu@example.test", ""),
+]
+
+
+def _harbour() -> None:
+    sn = engine.create_project("Harbour & Pine feedback", "CX Project", survey_no=HARBOUR)
+    p1 = engine.pages(sn)[0]["id"]
+    p2, p3 = engine.add_page(sn), engine.add_page(sn)
+    nps = _q(sn, p1, "metric", "How likely are you to recommend Harbour & Pine to a friend?", metric_kind="nps")
+    why = _q(sn, p1, "text", "What is the main reason for your score?", is_followup=True, parent_qid=nps)
+    contact = _q(sn, p2, "radio", "Would you like someone to contact you about this?", ["Yes, please", "No, thanks"])
+    staff = _q(sn, p2, "metric", "How would you rate our store staff?", metric_kind="csat")
+    _q(sn, p2, "metric", "How would you rate the delivery of your order?", metric_kind="csat")
+    _q(sn, p2, "metric", "How would you rate the quality of the product?", metric_kind="csat")
+    title = _q(sn, p3, "text", "What is your job title?")
+    # Callback offer: the contact question is shown only for an unresolved problem.
+    _class_set(sn, why, ["meaning.unresolved_problem"], [])
+    _logic(sn, why, "about", "meaning.unresolved_problem|yes", contact, LOGIC_MIN_PROB)
+    db.run("INSERT INTO category_list(survey_no, qid, instructions, classes) VALUES(?,?,?,?)", sn, title,
+           "Which seniority level does this job title belong to?", db.dumps(SENIORITY))
+    for wording, classes in (LOYALTY_APP, STAFF_SAID):
+        db.run("INSERT INTO virtual_question(survey_no, source_qid, wording, classes, created_at) VALUES(?,?,?,?,?)",
+               sn, why, wording, db.dumps(classes), db.now())
+    app_vq, staff_vq = virtual_questions.for_project(sn)
+    # Say it once: the staff rating is not asked when the comment already covers it.
+    db.run("INSERT INTO logic_rule(survey_no, source_qid, op, operand, action, target) VALUES(?,?,?,?,?,?)",
+           sn, why, virtual_questions.SKIP_OP, str(staff_vq["id"]), virtual_questions.SKIP_ACTION, staff)
+    condition, _ = virtual_questions.build_condition(app_vq, "yes_negative", virtual_questions.DEFAULT_MIN_PROB)
+    _alert(sn, "Loyalty app complaint", [condition], [{"type": "email", "target": "digital-lead@example.test"}])
+    for feature in (owners.FEATURE, fix_tracker.FEATURE):
+        db.run("INSERT INTO project_feature(survey_no, feature) VALUES(?,?)", sn, feature)
+    for respondent, score, comment, job in HARBOUR_RESPONSES:
+        respond(sn, {nps: score, why: comment, title: job}, respondent=respondent)
+
+
+def _account() -> None:
+    """Account-level lists: the teams, the known issues and the Distribute contacts."""
+    for name, description, lead in TEAMS:
+        db.run("INSERT INTO owner_team(name, description, lead) VALUES(?,?,?)", name, description, lead)
+    for name, description in ISSUES:
+        db.run("INSERT INTO known_issue(name, description) VALUES(?,?)", name, description)
+    for name, email, note in CONTACTS:
+        distribution.add_contact(name, email, note)
+
+
 def seed_if_empty() -> bool:
     if db.val("SELECT COUNT(*) FROM project"):
         return False
-    for build in (_retail, _clinic, _hotel, _staff, _quiz, _large):
+    for build in (_retail, _clinic, _hotel, _staff, _quiz, _large, _harbour, _account):
         build()
     logger.info("Seeded %s projects", db.val("SELECT COUNT(*) FROM project"))
     return True

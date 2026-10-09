@@ -5,11 +5,14 @@
   <p class="muted">{{ project.name }} · page {{ response.page_ord }} of {{ pages }}{% if response.offline %} · <span class="pill">Offline Mode</span>{% endif %}</p>
   {% if missing %}<p class="banner warn">Please answer the questions marked as required.</p>{% endif %}
   {% if encouraged %}<p class="banner">You have left a question blank. You can answer it now, or click Next again to continue.</p>{% endif %}
+  {% if identity %}<p class="banner warn">Your comment may identify you or someone else. You can edit it now, or click Next again to send it as it is.</p>{% endif %}
   <form method="post" action="/take/r/{{ response.id }}" class="stack">
-    {% if encouraged %}<input type="hidden" name="reminded" value="1">{% endif %}
+    {% if encouraged or reminded %}<input type="hidden" name="reminded" value="1">{% endif %}
+    {% if identity %}<input type="hidden" name="identity_ack" value="1">{% endif %}
     {% for q in questions %}
     {% set a = provided.get(q.qid) or {} %}
-    <fieldset class="question {{ 'missing' if q.qid in missing or q.qid in encouraged }}">
+    <fieldset class="question {{ 'missing' if q.qid in missing or q.qid in encouraged or q.qid in identity }}">
+      {% if q.qid in identity %}<p class="muted">This comment {{ identity[q.qid] }}.</p>{% endif %}
       <legend>{{ q.wording }}{% if q.required == 'mandatory' %} <span class="req" title="Mandatory">*</span>{% endif %}</legend>
       {% if q.type == 'radio' %}
         {% for o in q.options %}<label class="check"><input type="radio" name="q_{{ q.qid }}" value="{{ o.id }}" {{ 'checked' if o.id in (a.option_ids or []) }}> {{ o.text }}</label>{% endfor %}

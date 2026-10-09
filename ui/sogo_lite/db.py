@@ -88,6 +88,46 @@ CREATE TABLE IF NOT EXISTS gateway_call_log(
 CREATE TABLE IF NOT EXISTS pii_flag(
     response_id INTEGER NOT NULL, qid TEXT NOT NULL, kind TEXT NOT NULL, confidence REAL,
     band TEXT, log_id INTEGER, created_at TEXT NOT NULL, PRIMARY KEY(response_id, qid));
+
+-- Tables added for the feature concepts (docs/JEV-Feature-concepts.html)
+-- One row per text answer: {spec id: answer}, each answer tagged with the hash of the question that produced it.
+CREATE TABLE IF NOT EXISTS inferred_result(
+    response_id INTEGER NOT NULL, qid TEXT NOT NULL, answers TEXT NOT NULL DEFAULT '{}',
+    updated_at TEXT NOT NULL, PRIMARY KEY(response_id, qid));
+CREATE TABLE IF NOT EXISTS category_list(
+    survey_no INTEGER NOT NULL, qid TEXT NOT NULL, instructions TEXT,
+    classes TEXT NOT NULL DEFAULT '{}', PRIMARY KEY(survey_no, qid));
+CREATE TABLE IF NOT EXISTS virtual_question(
+    id INTEGER PRIMARY KEY, survey_no INTEGER NOT NULL, source_qid TEXT NOT NULL, wording TEXT NOT NULL,
+    classes TEXT NOT NULL DEFAULT '{}', going_forward INTEGER NOT NULL DEFAULT 1, created_at TEXT);
+CREATE TABLE IF NOT EXISTS coach_run(
+    id INTEGER PRIMARY KEY, survey_no INTEGER NOT NULL, qid TEXT NOT NULL, created_at TEXT NOT NULL,
+    result TEXT NOT NULL);
+-- Which projects an account-level feature reads; `feature` is owners | fix.
+CREATE TABLE IF NOT EXISTS project_feature(
+    survey_no INTEGER NOT NULL, feature TEXT NOT NULL, PRIMARY KEY(survey_no, feature));
+CREATE TABLE IF NOT EXISTS owner_team(
+    id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, description TEXT NOT NULL DEFAULT '', lead TEXT);
+CREATE TABLE IF NOT EXISTS known_issue(
+    id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, description TEXT NOT NULL DEFAULT '');
+-- `status` is open | fixed | still_happening | worse.
+CREATE TABLE IF NOT EXISTS issue_case(
+    id INTEGER PRIMARY KEY, contact TEXT NOT NULL, issue TEXT NOT NULL, survey_no INTEGER NOT NULL,
+    response_id INTEGER NOT NULL, qid TEXT NOT NULL, opened_at TEXT NOT NULL, confidence REAL,
+    status TEXT NOT NULL DEFAULT 'open', status_response_id INTEGER, status_at TEXT);
+-- A stand-in for Directories, Activities and email invitations.
+CREATE TABLE IF NOT EXISTS contact(
+    id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL,
+    unsubscribed INTEGER NOT NULL DEFAULT 0, flagged TEXT);
+CREATE TABLE IF NOT EXISTS activity(
+    id INTEGER PRIMARY KEY, contact_id INTEGER NOT NULL, note TEXT NOT NULL, created_at TEXT NOT NULL);
+-- `status` is sent | held | not_sent.
+CREATE TABLE IF NOT EXISTS invitation(
+    id INTEGER PRIMARY KEY, contact_id INTEGER NOT NULL, survey_no INTEGER NOT NULL, status TEXT NOT NULL,
+    reason TEXT, label TEXT, confidence REAL, band TEXT, log_id INTEGER, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS email_reply(
+    id INTEGER PRIMARY KEY, contact_id INTEGER NOT NULL, text TEXT NOT NULL, label TEXT, confidence REAL,
+    band TEXT, action TEXT NOT NULL, log_id INTEGER, created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS setting(name TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS scenario_run(
     id INTEGER PRIMARY KEY, started_at TEXT, finished_at TEXT, results TEXT);
@@ -116,7 +156,7 @@ def conn() -> sqlite3.Connection:
 
 
 # Columns added after the first cut: (table, column, definition).
-ADDED_COLUMNS = [("question", "pii_kind", "TEXT")]
+ADDED_COLUMNS = [("question", "pii_kind", "TEXT"), ("question", "coach_sig", "TEXT")]
 
 
 def init() -> None:

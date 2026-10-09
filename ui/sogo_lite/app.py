@@ -16,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 
 from sogo_lite import db, modules, seed
 from sogo_lite.config import TOKEN_ENV, gateway_token, get_settings
-from sogo_lite.routes import design, participate, tools
+from sogo_lite.routes import design, features, participate, tools
 from sogo_lite.web import PACKAGE_DIR
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -52,5 +52,6 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Sogo-lite mock platform", version="0.1.0", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=str(PACKAGE_DIR / "static")), name="static")
 app.include_router(design.router)
+app.include_router(features.router)
 app.include_router(participate.router)
 app.include_router(tools.router)

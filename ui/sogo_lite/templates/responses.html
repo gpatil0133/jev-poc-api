@@ -3,6 +3,17 @@
 {% if open_questions %}
 <p>Grading lists: {% for q in open_questions %}<a class="button ghost" href="/responses/{{ project.survey_no }}/grading/{{ q.qid }}">{{ q.qid }}: {{ q.wording|truncate(50) }}</a> {% endfor %}</p>
 {% endif %}
+{% for c in categories %}
+<section class="card">
+  <h2>Categories for <code>{{ c.q.qid }}</code> <small>{{ c.q.wording }} · what a quota or segment would read</small></h2>
+  <table>
+    <thead><tr>{% for label in c.counted %}<th>{{ label }}</th>{% endfor %}<th>Can't tell</th><th>Unsure</th><th>Not matched yet</th></tr></thead>
+    <tbody><tr>{% for label, n in c.counted.items() %}<td><strong>{{ n }}</strong></td>{% endfor %}
+      <td class="muted">{{ c.cant_tell }}</td><td class="muted">{{ c.unsure }}</td><td class="muted">{{ c.not_matched_yet }}</td></tr></tbody>
+  </table>
+  <p class="muted">Only confident matches (band <code>act</code>) are counted. "Can't tell" and unsure answers never count toward a category.</p>
+</section>
+{% endfor %}
 <table>
   <thead><tr><th>Response</th><th>Submitted</th><th>Source</th><th>First comment</th><th>Auto score</th><th>Alerts</th><th>Notes</th></tr></thead>
   <tbody>

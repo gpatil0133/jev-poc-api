@@ -26,6 +26,18 @@ TASKS = [
      "criteria": {"positive": "", "negative": "", "neutral": ""}},
     {"id": "comment.response_type", "type": "choice", "description": "type", "state": ["answer"],
      "criteria": {"complaint": "", "praise": "", "question": ""}},
+    {"id": "meaning.unresolved_problem", "type": "yesno", "description": "unresolved", "state": ["answer"],
+     "criteria": {"true": "y", "false": "n"}},
+    {"id": "design.wording_flaw", "type": "choice", "description": "flaw", "state": ["question"],
+     "criteria": {"leading": "", "fine": ""}},
+    {"id": "design.question_type", "type": "choice", "description": "type", "state": ["question"],
+     "criteria": {"nps": "", "open_text": ""}},
+    {"id": "ex.identity_risk", "type": "choice", "description": "identity", "state": ["answer"],
+     "criteria": {"identifies_writer": "", "safe": ""}},
+    {"id": "invite.timing", "type": "choice", "description": "timing", "state": ["activity_note"],
+     "criteria": {"send": "", "hold": "", "dont_send": ""}},
+    {"id": "invite.reply_type", "type": "choice", "description": "reply", "state": ["email_reply"],
+     "criteria": {"unsubscribe": "", "feedback": ""}},
 ]
 
 

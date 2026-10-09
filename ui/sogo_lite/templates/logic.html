@@ -54,6 +54,11 @@
       <label><select name="class_ref">{% for r in class_refs %}<option value="{{ r.ref }}">{{ r.text }}</option>{% else %}<option value="">no classes defined yet</option>{% endfor %}</select></label>
     </div>
     <div class="row">
+      <label class="check"><input type="radio" name="about_source" value="ready" {{ 'disabled' if not ready_made }}> a ready-made meaning</label>
+      <label><select name="task_id">{% for t in ready_made %}<option value="{{ t.id }}" {{ 'selected' if t.id == 'meaning.unresolved_problem' }}>{{ t.id }}: {{ t.description }}</option>{% else %}<option value="">the catalog is not available</option>{% endfor %}</select></label>
+      <span class="muted">Callback offer: pick <code>meaning.unresolved_problem</code> and show a "Would you like someone to contact you?" question.</span>
+    </div>
+    <div class="row">
       <label>Show question <select name="target_q" required><option value="">—</option>{% for q in questions if q.page_ord > source.page_ord %}<option value="{{ q.qid }}">{{ q.qid }} (page {{ q.page_ord }}): {{ q.wording }}</option>{% endfor %}</select></label>
       <label>Minimum probability <input name="min_prob" size="4" value="0.60"></label>
       <button>Add rule</button>

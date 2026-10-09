@@ -1,0 +1,74 @@
+{% extends "project_base.html" %}
+{% block content %}
+{% if not on %}<p class="banner warn">The Virtual Questions module is off. Stored answers are kept but nothing is asked, and rules that read them count as not met.</p>{% endif %}
+<p class="muted">A Virtual Question is a closed question nobody was asked. The author writes the question and its options; each respondent's answer is read from the comment they already wrote, and is always marked as inferred.</p>
+
+{% for vq in vqs %}
+{% set here = '/design/' ~ project.survey_no ~ '/virtual/' ~ vq.id %}
+<section class="card" id="vq{{ vq.id }}">
+  <h2>{{ vq.wording }} <small>read from <code>{{ vq.source_qid }}</code> · <span class="pill band-suggest">inferred</span></small></h2>
+  <table>
+    <thead><tr><th>Answer</th><th>Description</th><th>Responses</th><th>Share</th></tr></thead>
+    <tbody>{% for s in vq.summary.shares %}
+      <tr><td><code>{{ s.label }}</code></td><td class="muted">{{ vq.classes[s.label] }}</td><td>{{ s.count }}</td>
+          <td>{% if s.pct is not none %}<strong>{{ s.pct }}%</strong>{% if vq.summary.margin %} <span class="muted">± {{ vq.summary.margin }} points</span>{% endif %}{% endif %}</td></tr>
+    {% endfor %}</tbody>
+  </table>
+  <p class="muted">{{ vq.summary.answered }} of {{ vq.summary.total }} comment(s) answered{% if vq.summary.margin %}: a sample, so each share holds to within the margin shown at 95% confidence{% endif %}.
+    {% if vq.summary.unsure %}{{ vq.summary.unsure }} of them below band <code>act</code>; an unsure answer counts as <code>{{ not_mentioned }}</code>.{% endif %}</p>
+  <div class="row">
+    <form method="post" action="{{ here }}"><button name="action" value="preview" class="ghost">Preview on 10 comments</button></form>
+    <form method="post" action="{{ here }}"><button name="action" value="sample">Answer a sample (up to {{ sample_size }})</button></form>
+    <form method="post" action="{{ here }}"><button name="action" value="all" class="ghost">Answer every comment</button></form>
+    <form method="post" action="{{ here }}" class="row tight">
+      <label class="check"><input type="checkbox" name="going_forward" value="1" {{ 'checked' if vq.going_forward }}> answer new responses at submit</label>
+      <button name="action" value="forward" class="ghost">Save</button>
+    </form>
+    <form method="post" action="{{ here }}" data-confirm="Delete this Virtual Question?"><button name="action" value="delete" class="link danger">Delete</button></form>
+  </div>
+
+  {% if preview and preview.vq_id == vq.id %}
+  <h3>Preview <small>nothing was stored</small></h3>
+  <table>
+    <thead><tr><th>Comment</th><th>Answer</th><th>Confidence</th><th>Band</th></tr></thead>
+    <tbody>{% for r in preview.rows %}
+      <tr><td>{{ r.text }}</td><td>{{ r.effective or '—' }}</td>
+          <td>{% if r.answer %}{{ '%.2f'|format(r.answer.confidence or 0) }}{% endif %}</td>
+          <td>{% if r.answer %}<span class="pill band-{{ r.answer.band }}">{{ r.answer.band }}</span>{% endif %}</td></tr>
+    {% else %}<tr><td colspan="4" class="muted">No preview.</td></tr>{% endfor %}</tbody>
+  </table>
+  <p class="muted">If the answers look wrong, delete the question and write it again with clearer option descriptions before running it.</p>
+  {% endif %}
+
+  <h3>Use it</h3>
+  <form method="post" action="{{ here }}" class="row">
+    <label>Rules &amp; Alerts: when the answer is <select name="answer">{% for label in vq.classes %}<option>{{ label }}</option>{% endfor %}</select></label>
+    <label>add a condition to <select name="rule_id">{% for r in alert_rules %}<option value="{{ r.id }}">{{ r.name }}</option>{% else %}<option value="">no rules yet</option>{% endfor %}</select></label>
+    <label>Minimum probability <input name="min_prob" size="4" value="{{ default_min_prob }}"></label>
+    <button name="action" value="alert" class="ghost">Add condition</button>
+  </form>
+  <form method="post" action="{{ here }}" class="row">
+    <label>Say it once: skip <select name="target_qid"><option value="">—</option>{% for q in questions if q.type != 'text' and q.qid != vq.source_qid %}<option value="{{ q.qid }}">{{ q.qid }} (page {{ q.page_ord }}): {{ q.wording }}</option>{% endfor %}</select> when the comment already answers this</label>
+    <button name="action" value="skip" class="ghost">Add skip rule</button>
+  </form>
+  {% for r in vq.skips %}<p><span class="pill">say it once</span> <code>{{ r.target }}</code> is skipped when the answer is confident and not <code>{{ not_mentioned }}</code>.
+    <form method="post" action="/design/{{ project.survey_no }}/logic/{{ r.id }}/delete" style="display:inline"><button class="link danger">Remove</button></form></p>{% endfor %}
+  <p class="muted">A question is skipped on band <code>act</code> only. On a timeout, an error, an unsure answer or Offline Mode it is asked as usual. A Mandatory question is never skipped.</p>
+</section>
+{% else %}
+<section class="card"><p class="muted">No Virtual Questions in this project yet.</p></section>
+{% endfor %}
+
+<section class="card">
+  <h2>Add a Virtual Question</h2>
+  <form method="post" action="/design/{{ project.survey_no }}/virtual" class="stack">
+    <label>Read the answer from <select name="source_qid">{% for q in comment_questions %}<option value="{{ q.qid }}">{{ q.qid }}: {{ q.wording }}</option>{% else %}<option value="">this project has no comment question</option>{% endfor %}</select></label>
+    <label>Question <input name="wording" maxlength="400" required placeholder="Did the respondent mention the new loyalty app?"></label>
+    <label>Answer options, one per line as <code>option: one-line description</code>
+      <textarea name="lines" rows="4" placeholder="yes_negative: mentions the loyalty app and is unhappy with it&#10;yes_positive: mentions the loyalty app and is happy with it"></textarea></label>
+    <label class="check"><input type="checkbox" name="going_forward" value="1" checked> answer new responses at submit</label>
+    <div class="row"><button>Save Virtual Question</button></div>
+    <p class="muted"><code>{{ not_mentioned }}</code> is added when it is missing. Saving does not answer anything: preview first, then run a sample or every comment. Do not ask for personal details such as a name or a health condition in an Anonymous project; the mock does not check that.</p>
+  </form>
+</section>
+{% endblock %}

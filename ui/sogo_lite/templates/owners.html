@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Feedback Owners{% endblock %}
+{% block content %}
+<h1>Feedback Owners</h1>
+{% if not on %}<p class="banner warn">The Feedback Owners module is off. Nothing new is routed.</p>{% endif %}
+<p class="muted">Each comment is assigned to the team that owns it when the response is submitted, so a team lead sees their own feedback without opening the full report. The mock has one account and no login: who may open an inbox (user types, Data Visibility Rules) is not modelled.</p>
+
+<section class="card">
+  <h2>Inboxes</h2>
+  <nav class="tabs">
+    {% for name, box in inbox.teams.items() %}<a class="{{ 'on' if team == name }}" href="/owners?team={{ name|urlencode }}">{{ name }} ({{ box.comments|length }})</a>{% endfor %}
+    <a class="{{ 'on' if not team }}" href="/owners">For a person to route ({{ inbox.unsure|length }})</a>
+  </nav>
+  {% set comments = inbox.teams[team].comments if team else inbox.unsure %}
+  {% if team %}<p><strong>{{ team }}</strong>: {{ comments|length }} comment(s), {{ inbox.teams[team].low }} with a low score. <span class="muted">{{ inbox.teams[team].team.description }}</span></p>
+  {% else %}<p class="muted">Comments the classifier was unsure about. They are in no team's inbox. {{ inbox.unassigned }} more comment(s) were confidently nothing a team could act on.</p>{% endif %}
+  <table>
+    <thead><tr><th>Comment</th><th>Score</th><th>Project</th><th>Response</th><th>Confidence</th></tr></thead>
+    <tbody>{% for c in comments %}
+      <tr><td>{{ c.text }}{% if not team %} <span class="muted">leaned to {{ c.label }}</span>{% endif %}</td>
+          <td>{% if c.score is not none %}{{ '%g'|format(c.score) }}{% if c.low %} <span class="pill warn">low</span>{% endif %}{% endif %}</td>
+          <td>{{ c.project }}</td>
+          <td><a href="/responses/{{ c.survey_no }}/r/{{ c.response_id }}">#{{ c.response_id }}</a>{% if c.respondent %} <span class="muted">{{ c.respondent }}</span>{% endif %}</td>
+          <td>{{ '%.2f'|format(c.confidence or 0) }}</td></tr>
+    {% else %}<tr><td colspan="5" class="muted">Nothing here.</td></tr>{% endfor %}</tbody>
+  </table>
+  <form method="post" action="/owners" class="row">
+    <button name="action" value="digest" class="ghost">Write the digest emails to the outbox</button>
+    <button name="action" value="backfill" class="ghost">Read the responses already in these projects</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Teams</h2>
+  <form method="post" action="/owners" class="stack">
+    <label>One team per line as <code>team: what it owns | lead's email</code>
+      <textarea name="lines" rows="7">{% for t in teams %}{{ t.name }}: {{ t.description }}{% if t.lead %} | {{ t.lead }}{% endif %}
+{% endfor %}</textarea></label>
+    <div class="row"><button name="action" value="teams">Save teams</button></div>
+    <p class="muted">The description is what the classifier reads, so say what the team owns in plain words. Changing the list means every comment is assigned again the next time it is read.</p>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Projects</h2>
+  <form method="post" action="/owners" class="stack">
+    {% for p in projects %}<label class="check"><input type="checkbox" name="projects" value="{{ p.survey_no }}" {{ 'checked' if p.survey_no in enabled }}> #{{ p.survey_no }} {{ p.name }}{% if p.anonymous %} <span class="pill">Anonymous</span>{% endif %}</label>{% endfor %}
+    <div class="row"><button name="action" value="projects">Save projects</button></div>
+  </form>
+</section>
+{% endblock %}

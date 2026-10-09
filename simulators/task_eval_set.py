@@ -17,12 +17,16 @@ questions each set asks and what the expected answer to each is.
 Two more sets are kept but switched off (`enabled: False`): the shared classes
 (scope 1) and the gateway tasks no Design scope uses. `--include-disabled` runs them.
 
+Seven further sets (`fc_*`) cover the feature concepts. Their texts are the mock
+dataset in simulators/fixtures/feature_concepts/, about 400 texts in all.
+
 The inline questions are copies of what the Sogo-lite modules send
 (ui/sogo_lite/modules); keep the two in step. Every text is invented and the labels
 are one author's judgement.
 """
 from __future__ import annotations
 
+import csv
 import json
 import re
 from pathlib import Path
@@ -31,7 +35,9 @@ from typing import Any, Callable, Optional
 DATA_DIR = Path(__file__).parent / "fixtures" / "task_eval"
 TIERS = ("easy", "medium", "hard")
 # Expected answers for which nothing is due: staying quiet is the right result.
-NOTHING_DUE = {"no", "other", "none"}
+# The second line is the quiet answer of each feature-concept decision.
+NOTHING_DUE = {"no", "other", "none",
+               "not_mentioned", "none_of_these", "not_unresolved", "fine", "cant_tell", "safe", "send"}
 
 Check = dict[str, Any]      # one scored decision: question, answer_id, kind, expected, accept, item
 Plan = dict[str, Any]       # request fields for one call, plus its checks
@@ -43,6 +49,8 @@ def label_slug(label: str) -> str:
 
 
 def rows(name: str) -> list[dict[str, Any]]:
+    if name in FEATURE_SOURCES:
+        return _feature_rows(name)
     with (DATA_DIR / f"{name}.jsonl").open(encoding="utf-8") as fh:
         return [json.loads(line) for line in fh if line.strip()]
 
@@ -249,6 +257,95 @@ def _single_task(row: dict[str, Any]) -> Plan:
             "checks": [_check(task, task, "yesno" if task in YESNO_TASKS else "choice", row["expected"])]}
 
 
+# ── the feature concepts (docs/JEV-Feature-concepts.html) ───────────────────
+# The texts are the hand-written mock dataset in fixtures/feature_concepts/ (see
+# simulators/build_feature_dataset.py). Fixed-option decisions are asked as catalog
+# tasks; decisions whose options an account or author writes are asked inline, with
+# the definitions from that dataset's tasks.json.
+
+FEATURE_DIR = Path(__file__).parent / "fixtures" / "feature_concepts"
+FEATURE_TIERS = {"easy": "easy", "paraphrase": "medium", "tricky": "hard"}
+# set id -> (csv file, id column, text column)
+FEATURE_SOURCES = {
+    "fc_comments": ("comments.csv", "comment_id", "text"),
+    "fc_followups": ("fix_tracker_followups.csv", "followup_id", "new_text"),
+    "fc_questions": ("survey_questions.csv", "row_id", "question_text"),
+    "fc_profile": ("free_text_profile.csv", "row_id", "typed_answer"),
+    "fc_identity": ("ex_comments.csv", "row_id", "text"),
+    "fc_notes": ("activity_notes.csv", "row_id", "activity_note"),
+    "fc_replies": ("invitation_replies.csv", "row_id", "text"),
+}
+FEATURE_REASON_QUESTION = "What is the main reason for your score?"
+FEATURE_EX_QUESTION = "What would make this a better place to work?"
+FEATURE_PROFILE = {"job_title": ("seniority", "What is your job title?"),
+                   "industry": ("industry", "What industry do you work in?")}
+COMMENT_SPECS = {"vq_loyalty_app": "vq_loyalty_app", "coach_blind_spot": "coach_question",
+                 "owner_team": "owner_team", "fix_issue": "issue"}       # spec id -> expected column
+UNRESOLVED_TASK = "meaning.unresolved_problem"
+
+
+def _feature_rows(name: str) -> list[dict[str, Any]]:
+    file_name, id_column, text_column = FEATURE_SOURCES[name]
+    with (FEATURE_DIR / file_name).open(encoding="utf-8-sig", newline="") as fh:
+        return [{**row, "id": row[id_column], "text": row[text_column],
+                 "tier": FEATURE_TIERS[row["difficulty"]]} for row in csv.DictReader(fh)]
+
+
+def feature_spec(task_id: str, instructions: Optional[str] = None) -> dict[str, Any]:
+    task = FEATURE_TASKS[task_id]
+    return {"id": task_id, "type": "choice", "instructions": instructions or task["instructions"],
+            "classes": task["classes"]}
+
+
+def _fc_comments(row: dict[str, Any]) -> Plan:
+    checks = [_check(spec_id, spec_id, "choice", row[column]) for spec_id, column in COMMENT_SPECS.items()]
+    checks.append(_yesno("callback_offer", UNRESOLVED_TASK, row["callback"] == "unresolved"))
+    return {"tasks": [UNRESOLVED_TASK], "questions": [feature_spec(spec_id) for spec_id in COMMENT_SPECS],
+            "survey_question": FEATURE_REASON_QUESTION, "metric_score": float(row["nps"]), "checks": checks}
+
+
+def fix_status_spec(spec_id: str, issue: str, description: str) -> dict[str, Any]:
+    """Fix Tracker decision 2: the stored issue is named in the instructions."""
+    named = f"{issue.replace('_', ' ')} ({description})"
+    spec = feature_spec("fix_status", FEATURE_TASKS["fix_status"]["instructions"].format(issue=named)[:400])
+    return {**spec, "id": spec_id}
+
+
+def _fc_followups(row: dict[str, Any]) -> Plan:
+    issue = row["stored_issue"]
+    return {"questions": [fix_status_spec("fix_status", issue, FEATURE_TASKS["fix_issue"]["classes"][issue])],
+            "survey_question": FEATURE_REASON_QUESTION,
+            "checks": [_check("fix_status", "fix_status", "choice", row["expected_status"])]}
+
+
+def _fc_questions(row: dict[str, Any]) -> Plan:
+    return {"tasks": ["design.wording_flaw", "design.question_type"],
+            "context": {"question": row["question_text"], "answer_options": row["answer_options"]},
+            "checks": [_check("coach_wording", "design.wording_flaw", "choice", row["expected_flaw"]),
+                       _check("question_type", "design.question_type", "choice", row["expected_type"])]}
+
+
+def _fc_profile(row: dict[str, Any]) -> Plan:
+    spec_id, question = FEATURE_PROFILE[row["field"]]
+    return {"questions": [feature_spec(spec_id)], "survey_question": question,
+            "checks": [_check(f"free_text_{spec_id}", spec_id, "choice", row["expected_category"])]}
+
+
+def _fc_identity(row: dict[str, Any]) -> Plan:
+    return {"tasks": ["ex.identity_risk"], "survey_question": FEATURE_EX_QUESTION,
+            "checks": [_check("identity_warning", "ex.identity_risk", "choice", row["expected_label"])]}
+
+
+def _fc_notes(row: dict[str, Any]) -> Plan:
+    return {"tasks": ["invite.timing"], "context": {"activity_note": row["activity_note"]},
+            "checks": [_check("invitation_hold", "invite.timing", "choice", row["expected_decision"])]}
+
+
+def _fc_replies(row: dict[str, Any]) -> Plan:
+    return {"tasks": ["invite.reply_type"], "context": {"email_reply": row["text"]},
+            "checks": [_check("invitation_reply", "invite.reply_type", "choice", row["expected_label"])]}
+
+
 # ── the sets ────────────────────────────────────────────────────────────────
 
 def _set(set_id: str, scope: str, use: str, plan: Callable[[dict[str, Any]], Plan],
@@ -269,7 +366,17 @@ SETS = [
     _set("shared_classes", "1 Shared classes", "Sentiment and response type (parked)", _single_task,
          enabled=False),
     _set("other_gateway", "none", "Gateway tasks no Design scope uses (parked)", _single_task, enabled=False),
+    _set("fc_comments", "F Comments", "Virtual Question, blind spot, owning team, known issue, callback offer",
+         _fc_comments),
+    _set("fc_followups", "F Fix Tracker", "Is the earlier problem fixed, in a later answer", _fc_followups),
+    _set("fc_questions", "F Builder", "Survey Coach wording flaw and question type pick", _fc_questions),
+    _set("fc_profile", "F Free text", "Typed job title or industry to a category", _fc_profile),
+    _set("fc_identity", "F Identity warning", "Anonymous comment that could identify someone", _fc_identity),
+    _set("fc_notes", "F Invitation hold", "Send, hold or do not send, from the latest Activity note", _fc_notes),
+    _set("fc_replies", "F Invitation replies", "Kind of reply to an invitation email", _fc_replies),
 ]
 
 TAG_CATEGORIES: dict[str, dict[str, Any]] = _json("tag_categories.json")
 QUIZ_QUESTIONS: dict[str, dict[str, Any]] = _json("quiz_questions.json")
+FEATURE_TASKS: dict[str, dict[str, Any]] = {
+    task["id"]: task for task in json.loads((FEATURE_DIR / "tasks.json").read_text(encoding="utf-8"))}

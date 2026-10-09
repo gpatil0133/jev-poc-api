@@ -20,7 +20,10 @@ from typing import Any, Callable, Optional
 
 from sogo_lite import create_ai, db, engine, events, gateway, modules, seed, suggestions
 from sogo_lite.config import get_settings
-from sogo_lite.modules import pii, quiz_scoring, shared_classes, tag_suggest
+from sogo_lite.modules import (
+    distribution, free_text, identity, inferred, owners, pii, quiz_scoring, shared_classes, survey_coach,
+    tag_suggest, virtual_questions,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -311,8 +314,9 @@ def s4_branch(col: str, ctx: Ctx) -> Outcome:
 
 
 def s4_wording_only(col: str, ctx: Ctx) -> Outcome:
-    call = db.one("SELECT * FROM gateway_call_log WHERE id>? AND trigger='question.saved' ORDER BY id",
-                  ctx.get("income_first_log", 0))
+    # The scope 4 call; Survey Coach makes its own, which also carries the answer options.
+    call = db.one("SELECT * FROM gateway_call_log WHERE id>? AND trigger='question.saved'"
+                  " AND module LIKE '%sensitive_hint%' ORDER BY id", ctx.get("income_first_log", 0))
     if not call:
         return "fail", "no call was logged for the saved question"
     request = db.loads(call["request"], {})
@@ -329,7 +333,8 @@ def s4_dismiss(col: str, ctx: Ctx) -> Outcome:
         return "na", "no hint was created, so there is nothing to dismiss"
     suggestions.dismiss(hints[0]["id"])
     before = _last_log_id()
-    events.emit("question.saved", question=engine.question(ctx["income"]["id"]))
+    with modules.override({"survey_coach": False, "qtype_pick": False}):
+        events.emit("question.saved", question=engine.question(ctx["income"]["id"]))
     again = _pending(ctx["income"]["id"], "sensitive")
     return _check(not again and _last_log_id() == before,
                   f"hints after saving again unchanged: {len(again)}; new gateway calls: {_last_log_id() - before}")
@@ -339,7 +344,8 @@ def s5_reason(col: str, ctx: Ctx) -> Outcome:
     _save_question(ctx, "metric", "How likely are you to recommend us?", metric_kind="nps")
     ctx["reason_first_log"] = _last_log_id()
     question = _save_question(ctx, "text", REASON)
-    ctx["reason_calls"] = _last_log_id() - ctx["reason_first_log"]
+    ctx["reason_calls"] = db.val("SELECT COUNT(*) FROM gateway_call_log WHERE id>? AND module LIKE '%followup_flag%'",
+                                 ctx["reason_first_log"])
     found = _pending(question["id"], "followup")
     if _works(col, "classify"):
         return _check(len(found) == 1, f"follow-up suggestions on \"{REASON}\": {len(found)}")
@@ -527,6 +533,257 @@ def s8_jobs(col: str, ctx: Ctx) -> Outcome:
                   f"gateway host ({status.get('output_path')}); no endpoint returns it")
 
 
+# ── the feature concepts (docs/JEV-Feature-concepts.html) ───────────────────
+
+REFUND = "I was charged twice for the same rug and my refund still has not arrived after three weeks."
+REFUNDED = "The refund for the rug came through last week, thank you for sorting it."
+QUICK = "Quick and easy, thanks."
+APP_BROKEN = "The new app keeps logging me out before I can claim my points."
+STAFF_GOOD = "Staff in the Riverside store were friendly and knew the products well."
+CAR_PARK = "The car park lighting is terrible, I did not feel safe walking back after dark."
+LEADING = "How great was our friendly staff?"
+RECOMMEND = "How likely are you to recommend us to a friend?"
+NIGHT_SHIFT = "As the only night-shift supervisor at the Riverside warehouse, I never get a proper break."
+ESCALATED = "Complaint escalated to regional manager, awaiting response."
+RENEWED = "Renewed annual trade account, no issues raised."
+REMOVE_ME = "Please take me off your mailing list."
+TOPICS = "parking: car park, spaces, ticket machine, barrier\nloyalty_app: rewards app, points, login"
+
+
+def _harbour(comment: str, score: float = 5, title: str = "Analyst", **kwargs: Any) -> int:
+    return engine.take(seed.HARBOUR, {"q1": score, "q2": comment, "q3": "No, thanks", "q4": 4, "q5": 4, "q6": 4,
+                                      "q7": title}, **kwargs)
+
+
+def _inferred(response_id: int, qid: str, spec_id: str) -> dict[str, Any]:
+    return inferred.stored(response_id, qid).get(spec_id) or {}
+
+
+def f_callback(col: str, ctx: Ctx) -> Outcome:
+    response_id = _harbour(REFUND, 2)
+    shown = "q3" in engine.shown_qids(response_id)
+    if _works(col, "classify"):
+        return _check(shown, f"contact question shown for an unresolved problem: {shown}")
+    return _check(not shown and _submitted(response_id), f"default path taken: {not shown}; response submitted")
+
+
+def f_callback_quiet(col: str, ctx: Ctx) -> Outcome:
+    shown = "q3" in engine.shown_qids(_harbour(QUICK, 9))
+    return _check(not shown, f"contact question shown for \"{QUICK}\": {shown}")
+
+
+def _f_category(title: str, expected: Optional[str]) -> Callable[[str, Ctx], Outcome]:
+    def run(col: str, ctx: Ctx) -> Outcome:
+        response_id = _harbour(QUICK, 9, title=title)
+        answer = _inferred(response_id, "q7", free_text.SPEC_ID)
+        counted = inferred.counted_label(answer)
+        detail = (f"\"{title}\" stored as {answer.get('label')} ({answer.get('band')}); "
+                  f"counted toward: {counted or 'nothing'}")
+        if expected and _works(col, "classify"):
+            return _check(counted == expected, detail)
+        return _check(counted is None and _submitted(response_id), detail)
+    return run
+
+
+def _f_hint(kind: str, qtype: str, wording: str, key: str, expected: str) -> Callable[[str, Ctx], Outcome]:
+    def run(col: str, ctx: Ctx) -> Outcome:
+        question = _save_question(ctx, qtype, wording)
+        found = [db.loads(h["proposed"], {}).get(key) for h in _pending(question["id"], kind)]
+        if _works(col, "classify"):
+            return _check(found == [expected], f"{kind} hints on \"{wording}\": {found or 'none'}")
+        return _check(not found, f"hints: {len(found)}; the question was saved")
+    return run
+
+
+def f_coach_advice_only(col: str, ctx: Ctx) -> Outcome:
+    question = _save_question(ctx, "metric", "How wonderful was our award-winning delivery?")
+    hints = _pending(question["id"], "wording")
+    if not hints:
+        return "na", "no wording hint was created, so there is nothing to accept"
+    suggestions.accept(hints[0]["id"])
+    after = engine.question(question["id"])
+    return _check(after["wording"] == question["wording"], "accepting a wording hint leaves the question as written")
+
+
+def _f_identity(text: str, risky: bool) -> Callable[[str, Ctx], Outcome]:
+    def run(col: str, ctx: Ctx) -> Outcome:
+        response_id = engine.start_response(seed.STAFF, origin="scenario")
+        resp = engine.response(response_id)
+        question = engine.question_by_qid(seed.STAFF, "q3")
+        notes = identity.check(resp, engine.project(seed.STAFF), [question],
+                               {"q3": {"option_ids": [], "text": text, "number": None}})
+        stored = _calls(response_id)
+        detail = f"note shown: {bool(notes)}; calls tied to the response: {len(stored)}"
+        if risky and _works(col, "classify"):
+            return _check("q3" in notes and not stored, detail)
+        return _check(not notes and not stored, detail)
+    return run
+
+
+def _forget(survey_no: int, qid: str, spec_id: str) -> None:
+    """Drop one question's stored answers so a run has something to answer."""
+    for response_id, answers in inferred.by_response(survey_no, qid).items():
+        if answers.pop(spec_id, None) is not None:
+            db.run("UPDATE inferred_result SET answers=? WHERE response_id=? AND qid=?", db.dumps(answers),
+                   response_id, qid)
+
+
+def f_vq_run(col: str, ctx: Ctx) -> Outcome:
+    vq = virtual_questions.for_project(seed.HARBOUR)[0]
+    _forget(seed.HARBOUR, vq["source_qid"], virtual_questions.spec_id(vq["id"]))
+    done = virtual_questions.run(vq)
+    summary = virtual_questions.summary(vq)
+    detail = (f"sent {done['sent']}, stored {done['stored']}, failed {done['failed']}, unsure {done['unsure']}; "
+              f"{summary['answered']} of {summary['total']} comments answered")
+    if _works(col, "batch"):
+        return _check(done["stored"] == done["sent"] > 0 and summary["answered"] == done["stored"], detail)
+    return _check(done["stored"] == 0 and summary["answered"] == 0, detail)
+
+
+def f_vq_preview(col: str, ctx: Ctx) -> Outcome:
+    vq = virtual_questions.for_project(seed.HARBOUR)[0]
+    before = virtual_questions.summary(vq)["answered"]
+    rows, message = virtual_questions.preview(vq)
+    kept = virtual_questions.summary(vq)["answered"] == before
+    if _works(col, "batch"):
+        return _check(len(rows) == virtual_questions.PREVIEW_SIZE and kept, f"{len(rows)} comments previewed; "
+                                                                             f"nothing stored: {kept}")
+    if col == "lowconf":
+        unsure = all(r["effective"] == virtual_questions.NOT_MENTIONED for r in rows)
+        return _check(bool(rows) and unsure and kept, f"every unsure answer reads as not mentioned: {unsure}")
+    return _check(not rows and kept and bool(message), message or "no message")
+
+
+def f_vq_alert(col: str, ctx: Ctx) -> Outcome:
+    response_id = _harbour(APP_BROKEN, 3)
+    fired = "Loyalty app complaint" in _fired(response_id)
+    if _works(col, "classify"):
+        return _check(fired, f"alert on the inferred answer fired: {fired}")
+    return _check(not fired and _submitted(response_id), f"alert fired: {fired}; response submitted")
+
+
+def f_vq_say_it_once(col: str, ctx: Ctx) -> Outcome:
+    asked = "q4" in engine.shown_qids(_harbour(STAFF_GOOD, 9))
+    if _works(col, "classify"):
+        return _check(not asked, f"staff rating asked after a comment that already covers it: {asked}")
+    return _check(asked, f"staff rating asked as usual: {asked}")
+
+
+def f_vq_never_skips_unsaid(col: str, ctx: Ctx) -> Outcome:
+    asked = "q4" in engine.shown_qids(_harbour(CAR_PARK, 5))
+    with modules.override({"virtual_questions": False}):
+        asked_off = "q4" in engine.shown_qids(_harbour(STAFF_GOOD, 9))
+    return _check(asked and asked_off, f"asked when the comment does not cover it: {asked}; "
+                                       f"asked with the module off: {asked_off}")
+
+
+def f_blind_spot(col: str, ctx: Ctx) -> Outcome:
+    before = db.val("SELECT COUNT(*) FROM coach_run WHERE survey_no=?", seed.HARBOUR)
+    ok, message = survey_coach.run_blind_spot(seed.HARBOUR, "q2", TOPICS)
+    runs = db.val("SELECT COUNT(*) FROM coach_run WHERE survey_no=?", seed.HARBOUR) - before
+    run = survey_coach.latest_blind_spot(seed.HARBOUR) if runs else None
+    if col in ("normal", "slow"):
+        return _check(ok and bool(run) and run["suggest"] and "parking" in run["result"]["topics"],
+                      f"{message} Topics: {run['result']['topics'] if run else 'none'}")
+    if col == "lowconf":
+        return _check(ok and bool(run) and not run["suggest"], f"{message} Nothing is suggested on unsure answers")
+    return _check(not ok and not runs, message)
+
+
+def f_owner(col: str, ctx: Ctx) -> Outcome:
+    response_id = _harbour(CAR_PARK, 3)
+    box = owners.inbox()
+    teams = [name for name, team in box["teams"].items()
+             if any(c["response_id"] == response_id for c in team["comments"])]
+    if _works(col, "classify"):
+        return _check(teams == ["facilities"], f"comment is in the inbox of: {teams or 'no team'}")
+    return _check(not teams and _submitted(response_id), f"in a team inbox: {teams or 'no'}; response submitted")
+
+
+def f_fix(col: str, ctx: Ctx) -> Outcome:
+    contact = f"Scenario contact {col} {_last_log_id()}"
+    _harbour(REFUND, 2, respondent=contact)
+    opened = db.rows("SELECT * FROM issue_case WHERE contact=?", contact)
+    _harbour(REFUNDED, 8, respondent=contact)
+    after = db.rows("SELECT * FROM issue_case WHERE contact=?", contact)
+    detail = (f"cases after the complaint: {[c['issue'] for c in opened] or 'none'}; "
+              f"status after the later answer: {[c['status'] for c in after] or 'none'}")
+    if _works(col, "classify"):
+        return _check([c["issue"] for c in opened] == ["billing_error"] and [c["status"] for c in after] == ["fixed"],
+                      detail)
+    return _check(not after, detail)
+
+
+def f_fix_anonymous(col: str, ctx: Ctx) -> Outcome:
+    before = db.val("SELECT COUNT(*) FROM issue_case")
+    _harbour(REFUND, 2)
+    return _check(db.val("SELECT COUNT(*) FROM issue_case") == before, "a response with no contact opens no case")
+
+
+def _f_hold(note: Optional[str], expected: str, **contact: Any) -> Callable[[str, Ctx], Outcome]:
+    def run(col: str, ctx: Ctx) -> Outcome:
+        before = _last_log_id()
+        decision = distribution._decide({"id": 0, "unsubscribed": 0, "flagged": None,
+                                         "note": {"note": note} if note else None, **contact}, seed.HARBOUR)
+        calls = _last_log_id() - before
+        detail = f"{decision['status']}: {decision['reason']}; gateway calls: {calls}"
+        if contact:     # left out by a plain rule: the note is never sent anywhere
+            return _check(decision["status"] == expected and not calls, detail)
+        # When the note cannot be read the invitation goes out, as it does today.
+        return _check(decision["status"] == (expected if _works(col, "classify") else "sent"), detail)
+    return run
+
+
+def f_reply(col: str, ctx: Ctx) -> Outcome:
+    contact_id = distribution.add_contact("Scenario contact", "scenario@example.test")
+    try:
+        message = distribution.receive_reply(contact_id, REMOVE_ME)
+        unsubscribed = bool(db.val("SELECT unsubscribed FROM contact WHERE id=?", contact_id))
+        kept = db.val("SELECT COUNT(*) FROM email_reply WHERE contact_id=?", contact_id) == 1
+        if _works(col, "classify"):
+            return _check(unsubscribed and kept, message)
+        return _check(not unsubscribed and kept, message)
+    finally:
+        for table, column in (("email_reply", "contact_id"), ("contact", "id")):
+            db.run(f"DELETE FROM {table} WHERE {column}=?", contact_id)
+
+
+FEATURE_SCENARIOS: list[Scenario] = [
+    Scenario("Fa1", "F Callback offer", "An unresolved refund shows the contact question", f_callback),
+    Scenario("Fa2", "F Callback offer", "\"Quick and easy, thanks.\" does not", f_callback_quiet),
+    Scenario("Fb1", "F Survey Coach", "\"How great was our friendly staff?\" gets a leading-question hint",
+             _f_hint("wording", "metric", LEADING, "flaw", "leading")),
+    Scenario("Fb2", "F Survey Coach", "Accepting a wording hint changes nothing", f_coach_advice_only),
+    Scenario("Fb3", "F Survey Coach", "Comments about parking and the app are reported as a blind spot", f_blind_spot),
+    Scenario("Fc1", "F Question type", "A recommend question saved as a Text Box gets an NPS hint",
+             _f_hint("qtype", "text", RECOMMEND, "label", "nps")),
+    Scenario("Fd1", "F Free text", "\"Sr. Eng. Manager\" counts toward senior management",
+             _f_category("Sr. Eng. Manager", "senior_management")),
+    Scenario("Fd2", "F Free text", "\"freelance\" counts toward nothing", _f_category("freelance", None)),
+    Scenario("Fe1", "F Identity warning", "A comment from \"the only night-shift supervisor\" gets the note",
+             _f_identity(NIGHT_SHIFT, True)),
+    Scenario("Fe2", "F Identity warning", "\"No complaints, the team is great.\" gets none",
+             _f_identity("No complaints, the team is great.", False)),
+    Scenario("Ff1", "F Virtual Questions", "A preview answers 10 comments and stores nothing", f_vq_preview),
+    Scenario("Ff2", "F Virtual Questions", "A run stores one inferred answer per comment", f_vq_run),
+    Scenario("Ff3", "F Virtual Questions", "An alert on the inferred answer fires for an app complaint", f_vq_alert),
+    Scenario("Ff4", "F Virtual Questions", "Say it once: the staff rating is skipped after praise for the staff",
+             f_vq_say_it_once),
+    Scenario("Ff5", "F Virtual Questions", "Nothing is skipped when the comment does not cover it, or the module is off",
+             f_vq_never_skips_unsaid),
+    Scenario("Fg1", "F Feedback Owners", "A car park comment lands in the Facilities inbox", f_owner),
+    Scenario("Fh1", "F Fix Tracker", "A billing complaint opens a case; the later answer marks it fixed", f_fix),
+    Scenario("Fh2", "F Fix Tracker", "A response with no contact opens no case", f_fix_anonymous),
+    Scenario("Fi1", "F Invitation hold", "An escalated complaint in the latest note holds the invitation",
+             _f_hold(ESCALATED, "held")),
+    Scenario("Fi2", "F Invitation hold", "A routine note sends it", _f_hold(RENEWED, "sent")),
+    Scenario("Fi3", "F Invitation hold", "An unsubscribed contact is left out without reading the note",
+             _f_hold(ESCALATED, "not_sent", unsubscribed=1)),
+    Scenario("Fj1", "F Invitation replies", "\"Please take me off your mailing list.\" unsubscribes the contact",
+             f_reply),
+]
+
+
 SCENARIOS: list[Scenario] = [
     Scenario("1a", "1 Shared classes", "A saved class set reads back from the gateway and matches", s1_roundtrip),
     Scenario("1b", "1 Shared classes", "One classify call for a question that a branch and an alert both read",
@@ -569,7 +826,7 @@ SCENARIOS: list[Scenario] = [
     Scenario("10b", "10 Personal data in answers", "\"Great service and friendly staff.\" is not flagged",
              s10_plain),
     Scenario("10c", "10 Personal data in answers", "Offline Mode makes no gateway call", s10_offline),
-]
+] + FEATURE_SCENARIOS
 
 
 # ── running ─────────────────────────────────────────────────────────────────

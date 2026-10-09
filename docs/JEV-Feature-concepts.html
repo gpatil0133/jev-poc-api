@@ -1,0 +1,586 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>JEV Feature Concepts</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column with a sticky section index; one card per feature, each splitting the JEV decision from the platform work; wide tables scroll inside their own frame. Same system as the JEV Scope page. */
+:root{
+  --bg:#f2f4f6; --surface:#ffffff; --sunk:#e8ecf0; --ink:#17212c; --muted:#566473; --line:#d3dae1;
+  --accent:#0c6a70; --accent-soft:#dcedee;
+  --good:#1c6b3c; --good-bg:#dff0e5; --warn:#8a5a00; --warn-bg:#f8ebcc; --bad:#a12a2a; --bad-bg:#f7dede; --low:#566473; --low-bg:#e4e8ec;
+  --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11181f; --surface:#19232d; --sunk:#222e3a; --ink:#e6ecf1; --muted:#9aa8b6; --line:#32404e;
+  --accent:#5fc4c9; --accent-soft:#17383b;
+  --good:#7fd6a0; --good-bg:#173524; --warn:#edc166; --warn-bg:#3d3013; --bad:#f09a9a; --bad-bg:#431f1f; --low:#9aa8b6; --low-bg:#27333f;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11181f; --surface:#19232d; --sunk:#222e3a; --ink:#e6ecf1; --muted:#9aa8b6; --line:#32404e;
+  --accent:#5fc4c9; --accent-soft:#17383b;
+  --good:#7fd6a0; --good-bg:#173524; --warn:#edc166; --warn-bg:#3d3013; --bad:#f09a9a; --bad-bg:#431f1f; --low:#9aa8b6; --low-bg:#27333f;
+  color-scheme:dark}
+
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+header.top{display:flex;flex-direction:column;gap:12px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--display);font-weight:600;font-size:clamp(30px,5vw,44px);line-height:1.08;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-weight:600;font-size:26px;line-height:1.15;margin:0;text-wrap:balance}
+h3{font-family:var(--display);font-weight:600;font-size:19px;margin:0;text-wrap:balance}
+p{margin:0;max-width:68ch}
+.lede{font-size:17px;color:var(--muted)}
+.note{border-left:3px solid var(--warn);background:var(--warn-bg);padding:10px 14px;max-width:none;font-size:14px}
+nav.idx{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding-block:8px;display:flex;flex-wrap:wrap;gap:4px 14px;font-family:var(--mono);font-size:12.5px}
+nav.idx a{color:var(--muted);text-decoration:none;padding:2px 0}
+nav.idx a:hover,nav.idx a:focus-visible{color:var(--accent);text-decoration:underline}
+nav.idx .sep{color:var(--line)}
+a{color:var(--accent)}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+section{display:flex;flex-direction:column;gap:16px;scroll-margin-top:70px}
+.part{border-top:2px solid var(--ink);padding-top:14px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.grid>*{min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);padding:16px;display:flex;flex-direction:column;gap:8px}
+.panel .k{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.06em;text-transform:uppercase}
+.panel p,.panel li{font-size:14px}
+ul,ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;max-width:72ch}
+.tw{overflow-x:auto;border:1px solid var(--line);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;line-height:1.45;min-width:720px}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+th{font-family:var(--mono);font-weight:500;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--sunk);white-space:nowrap}
+td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td strong{font-weight:600}
+.pill{display:inline-block;font-family:var(--mono);font-size:11.5px;padding:1px 8px;border-radius:2px;white-space:nowrap}
+.yes{color:var(--good);background:var(--good-bg)}
+.may{color:var(--warn);background:var(--warn-bg)}
+.no{color:var(--bad);background:var(--bad-bg)}
+.low{color:var(--low);background:var(--low-bg)}
+.new{color:var(--accent);background:var(--accent-soft)}
+.who-jev{color:var(--accent);background:var(--accent-soft);font-weight:500}
+.who-plat{color:var(--low);background:var(--low-bg)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:13px;color:var(--muted)}
+blockquote{margin:0;padding:10px 16px;border-left:3px solid var(--accent);background:var(--accent-soft);font-style:italic;max-width:68ch}
+code{font-family:var(--mono);font-size:.92em;background:var(--sunk);padding:0 4px}
+.muted{color:var(--muted)}
+footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+
+.scope{background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column}
+.scope-top{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 14px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.scope-top h3{flex:1 1 320px;min-width:0;font-size:22px}
+.scope-top .tags{display:flex;flex-wrap:wrap;gap:6px}
+.scope-body{padding:14px 16px;display:flex;flex-direction:column;gap:14px}
+.scope-body .loc{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+.simple{font-size:15px;max-width:76ch}
+.cols{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.cols>*{min-width:0}
+.col{display:flex;flex-direction:column;gap:6px;padding:12px 14px;background:var(--sunk);border:1px solid var(--line)}
+.col .k{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.col p,.col li{font-size:14px}
+.col ul{gap:4px}
+.k2{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.split{display:flex;flex-direction:column;gap:8px}
+.spec{background:var(--accent-soft);padding:12px 14px;display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;font-size:14px}
+.spec dt{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);padding-top:2px}
+.spec dd{margin:0;min-width:0}
+.split table{min-width:600px}
+.split td:nth-child(2){white-space:nowrap}
+.ex{display:flex;flex-direction:column;gap:8px}
+.ex table{min-width:560px}
+.watch{font-size:13.5px;color:var(--muted);max-width:none}
+.watch strong{color:var(--ink)}
+.rank{display:grid;grid-template-columns:auto 1fr;gap:10px 14px;align-items:baseline}
+.rank .r{font-family:var(--mono);color:var(--accent);font-weight:500}
+@media (max-width:520px){.spec{grid-template-columns:1fr}}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">Sogolytics platform &middot; new features built on JEV</div>
+  <h1>New features JEV makes possible</h1>
+  <p class="lede">JEV only makes decisions: given one short text and a list of options, it returns a probability for each option. It does not store, count, join or trend anything. Every feature on this page is therefore split into <strong>the JEV decision</strong> and <strong>the platform work</strong> around it, so it is clear which part is AI and which part is ordinary product engineering.</p>
+  <p class="note">Everything on this page is a proposal, not current product behaviour. Examples are illustrative, not measured. Each feature was checked against the AI Report's open-ended analysis (theme impact, dissonance, cohorts) so it does not repeat what that already does.</p>
+  <div class="legend">
+    <span><span class="pill who-jev">JEV</span> one decision on one item</span>
+    <span><span class="pill who-plat">Platform</span> storage, lookups, counts, screens, permissions</span>
+  </div>
+</header>
+
+<nav class="idx" aria-label="Sections">
+  <a href="#compare">At a glance</a>
+  <span class="sep">|</span>
+  <a href="#built">Built on decisions</a>
+  <a href="#vq">Virtual Questions</a>
+  <a href="#coach">Survey Coach</a>
+  <a href="#fix">Fix Tracker</a>
+  <a href="#owners">Feedback Owners</a>
+  <span class="sep">|</span>
+  <a href="#decision">Decision only</a>
+  <a href="#callback">Callback offer</a>
+  <a href="#hold">Invitation hold</a>
+  <a href="#freetext">Free text to category</a>
+  <a href="#identify">Identity warning</a>
+  <a href="#qtype">Question type</a>
+  <a href="#replies">Invitation replies</a>
+  <span class="sep">|</span>
+  <a href="#order">Suggested order</a>
+  <a href="#open">Open questions</a>
+</nav>
+
+<section id="compare">
+  <h2>At a glance</h2>
+  <p>Two kinds of feature. <strong>Built on decisions</strong>: JEV makes many small decisions and the platform turns them into something bigger. <strong>Decision only</strong>: one decision triggers one action straight away, with almost no platform work.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Feature</th><th>Kind</th><th>JEV decisions</th><th>Platform work</th><th>Effort</th><th>Risk</th></tr></thead>
+    <tbody>
+      <tr><td><a href="#vq"><strong>Virtual Questions</strong></a></td><td>Built on decisions</td><td>1 per respondent per question; ~400 for a sampled estimate</td><td>Question definition, saved answers, use across modules</td><td><span class="pill may">Medium</span></td><td><span class="pill may">Medium</span></td></tr>
+      <tr><td><a href="#coach"><strong>Survey Coach</strong></a></td><td>Built on decisions</td><td>1 per question saved; 1 per sampled comment</td><td>Warnings in the builder, a "none" count</td><td><span class="pill yes">Low</span></td><td><span class="pill yes">Low</span></td></tr>
+      <tr><td><a href="#fix"><strong>Fix Tracker</strong></a></td><td>Built on decisions</td><td>Up to 2 per complaint, only for returning contacts</td><td>Contact linkage across surveys, fix-rate report</td><td><span class="pill may">Medium</span></td><td><span class="pill may">Medium</span></td></tr>
+      <tr><td><a href="#owners"><strong>Feedback Owners</strong></a></td><td>Built on decisions</td><td>1 per comment</td><td>Team list, weekly inbox, permissions</td><td><span class="pill may">Low–medium</span></td><td><span class="pill may">Medium</span></td></tr>
+      <tr><td><a href="#callback"><strong>Callback offer</strong></a></td><td>Decision only</td><td>1 per comment, at Next</td><td>Show one question</td><td><span class="pill yes">Low</span></td><td><span class="pill may">Medium</span> live page</td></tr>
+      <tr><td><a href="#hold"><strong>Invitation hold</strong></a></td><td>Decision only</td><td>1 per invitation with a recent Activity note</td><td>One Touch Rules condition</td><td><span class="pill yes">Low</span></td><td><span class="pill yes">Low</span></td></tr>
+      <tr><td><a href="#freetext"><strong>Free text to category</strong></a></td><td>Decision only</td><td>1 per free-text answer, at submit</td><td>Store the category</td><td><span class="pill yes">Low</span></td><td><span class="pill yes">Low</span></td></tr>
+      <tr><td><a href="#identify"><strong>Identity warning</strong></a></td><td>Decision only</td><td>1 per comment, at submit</td><td>Show one note</td><td><span class="pill yes">Low</span></td><td><span class="pill may">Medium</span> live page</td></tr>
+      <tr><td><a href="#qtype"><strong>Question type pick</strong></a></td><td>Decision only</td><td>1 per question typed</td><td>Pre-select a type</td><td><span class="pill yes">Low</span></td><td><span class="pill yes">Low</span></td></tr>
+      <tr><td><a href="#replies"><strong>Invitation replies</strong></a></td><td>Decision only</td><td>1 per reply</td><td>Unsubscribe, remove or forward</td><td><span class="pill may">Depends</span></td><td><span class="pill may">To confirm</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================================================================ -->
+<section id="built" class="part">
+  <div class="eyebrow">Part 1</div>
+  <h2>Built on decisions</h2>
+  <p>JEV decides on one item at a time. The platform saves each decision and does the counting, linking and reporting, the same way it already handles closed-question answers.</p>
+</section>
+
+<!-- VIRTUAL QUESTIONS -->
+<section id="vq">
+  <article class="scope">
+    <div class="scope-top"><h3>Virtual Questions</h3><div class="tags"><span class="pill new">Lead feature</span><span class="pill may">Medium effort</span></div></div>
+    <div class="scope-body">
+      <div class="loc">Defined in Design (or at account level) · answers appear in Data, Reports, Filters, Logic, Rules &amp; Alerts and Export</div>
+      <p class="simple"><strong>In simple words:</strong> a closed survey question nobody had to answer, because JEV answers it from what each respondent already wrote. The answer then behaves like a real question everywhere in the product.</p>
+      <div class="cols">
+        <div class="col"><div class="k">What we have today</div>
+          <ul><li>Closed questions only exist if respondents were asked them.</li><li>The AI Report's open-ended analysis finds themes itself and shows them as report panels.</li><li>A question you think of after the survey closes needs a new survey, or someone reading every comment.</li></ul>
+        </div>
+        <div class="col"><div class="k">What the user gets</div>
+          <ul><li><strong>Ask after:</strong> add a question to a closed survey and get an answer per respondent.</li><li><strong>Say it once:</strong> skip rating questions a respondent already covered in their comment.</li><li><strong>Question library:</strong> save questions at account level and use them as Logic or Rules &amp; Alerts conditions.</li></ul>
+        </div>
+      </div>
+
+      <div class="split">
+        <div class="k2">The JEV decision</div>
+        <dl class="spec">
+          <dt>Input</dt><dd>One respondent's comment, plus the question the admin wrote</dd>
+          <dt>Options</dt><dd>The admin's answer options, plus "not mentioned"</dd>
+          <dt>Output</dt><dd>A probability per option, for example "Yes, negative 0.95"</dd>
+          <dt>How often</dt><dd>One decision per respondent per Virtual Question. For "ask after" there are two ways to keep it light: decide on a random sample of about 400 comments, which gives the share to within about ±5 points at 95% confidence whatever the survey size; or apply it only to new responses going forward. The full back-run is an optional background job.</dd>
+        </dl>
+        <div class="k2">Who does what</div>
+        <div class="tw"><table>
+          <thead><tr><th>Step</th><th>Who</th><th>What happens</th></tr></thead>
+          <tbody>
+            <tr><td>Admin writes the question and options</td><td><span class="pill who-plat">Platform</span></td><td>Saved like a question definition</td></tr>
+            <tr><td>Preview on 10–20 sample comments</td><td><span class="pill who-jev">JEV</span></td><td>One decision each, so the admin can check and reword before running it</td></tr>
+            <tr><td>Answer a respondent</td><td><span class="pill who-jev">JEV</span></td><td>One decision on that respondent's comment</td></tr>
+            <tr><td>Save the answer and confidence</td><td><span class="pill who-plat">Platform</span></td><td>Stored as an inferred response value, apart from real answers</td></tr>
+            <tr><td>Use in Omni, Cross-Tab, Filters, Logic, Alerts, Export</td><td><span class="pill who-plat">Platform</span></td><td>Read like any closed answer, with an "inferred" marker</td></tr>
+            <tr><td>Say it once: skip a covered question</td><td><span class="pill who-plat">Platform</span></td><td>Skip only when the stored confidence is above the threshold; otherwise ask</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div class="ex"><div class="k2">Example</div>
+        <p>Virtual Question: "Did the respondent mention the new loyalty app?"</p>
+        <div class="tw"><table>
+          <thead><tr><th>Comment</th><th>JEV answer</th><th>Confidence</th></tr></thead>
+          <tbody>
+            <tr><td>"The new app keeps logging me out before I can claim points."</td><td>Yes, negative</td><td class="n">0.95</td></tr>
+            <tr><td>"Love collecting points on the app, saves me every week."</td><td>Yes, positive</td><td class="n">0.93</td></tr>
+            <tr><td>"Staff were friendly, store was clean."</td><td>Not mentioned</td><td class="n">0.98</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="cols">
+        <div class="col"><div class="k">Why it's new</div><p>Today you can only analyse what you remembered to ask. This lets you ask afterwards and get an answer per respondent the rest of the product can use. The AI Report discovers themes; Virtual Questions answers the customer's own question.</p></div>
+        <div class="col"><div class="k">Why it needs JEV</div><p>The options are defined per request, so nothing is retrained. Each answer is a cheap decision with a calibrated probability, fast enough for the live "say it once" case.</p></div>
+      </div>
+      <p class="watch"><strong>Guardrails:</strong> inferred answers are marked in reports and flagged in exports. Low confidence lands on "not mentioned". In live surveys a question is never skipped on low confidence. Virtual Questions cannot target personal details such as names or health conditions in anonymous projects.</p>
+    </div>
+  </article>
+</section>
+
+<!-- SURVEY COACH -->
+<section id="coach">
+  <article class="scope">
+    <div class="scope-top"><h3>Survey Coach</h3><div class="tags"><span class="pill yes">Low effort</span><span class="pill yes">Low risk</span></div></div>
+    <div class="scope-body">
+      <div class="loc">Design → question builder (before launch) · Design → survey overview (after launch)</div>
+      <p class="simple"><strong>In simple words:</strong> before launch, flag badly worded questions. After launch, point out what respondents keep writing about that no question asks.</p>
+      <div class="cols">
+        <div class="col"><div class="k">What we have today</div><p>Insights describe respondents, not the survey. To confirm: whether the builder checks question wording at all today.</p></div>
+        <div class="col"><div class="k">What the user gets</div><p>Spell-checker style warnings with a suggested rewrite, and an occasional "add a question about X?" prompt after launch.</p></div>
+      </div>
+      <div class="split">
+        <div class="k2">The JEV decisions</div>
+        <dl class="spec">
+          <dt>Before launch</dt><dd>Input: one question and its answer options. Options: leading, double-barrelled, vague time frame, jargon, sensitive, overlapping or missing answer options, fine. One decision per question saved.</dd>
+          <dt>After launch</dt><dd>Input: one comment. Options: the survey's own questions, plus "none of these". One decision per comment, or per sampled comment.</dd>
+        </dl>
+        <div class="k2">Who does what</div>
+        <div class="tw"><table>
+          <thead><tr><th>Step</th><th>Who</th><th>What happens</th></tr></thead>
+          <tbody>
+            <tr><td>Check a question on save</td><td><span class="pill who-jev">JEV</span></td><td>Picks the problem, or "fine"</td></tr>
+            <tr><td>Show the warning</td><td><span class="pill who-plat">Platform</span></td><td>Inline note in the builder; the author can dismiss it</td></tr>
+            <tr><td>Match a comment to the survey's questions</td><td><span class="pill who-jev">JEV</span></td><td>Picks a question, or "none of these"</td></tr>
+            <tr><td>Count "none of these" and find what they share</td><td><span class="pill who-plat">Platform</span></td><td>A count over saved decisions; above a minimum, suggest a question</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="ex"><div class="k2">Examples</div>
+        <div class="tw"><table>
+          <thead><tr><th>What the author wrote</th><th>Warning</th><th>Suggestion</th></tr></thead>
+          <tbody>
+            <tr><td>"How great was our friendly staff?"</td><td>Leading</td><td>"How would you rate our staff?"</td></tr>
+            <tr><td>"Was the room clean and quiet?"</td><td>Double-barrelled</td><td>Split into two questions</td></tr>
+            <tr><td>Options: 0–5, 5–10, 10+ years</td><td>Overlapping options</td><td>0–4, 5–9, 10 or more</td></tr>
+            <tr><td>After launch: 18% of comments discuss parking</td><td>Blind spot</td><td>No question asks about parking. Add one?</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <p class="watch"><strong>Watch-outs:</strong> everything is a suggestion. Naming what the "none of these" comments share needs either a short list of likely topics or one LLM call; JEV alone can only say they fit no question. "Leading question" detection needs a labelled test set to tune it.</p>
+    </div>
+  </article>
+</section>
+
+<!-- FIX TRACKER -->
+<section id="fix">
+  <article class="scope">
+    <div class="scope-top"><h3>Fix Tracker</h3><div class="tags"><span class="pill may">Medium effort</span><span class="pill may">Needs repeat respondents</span></div></div>
+    <div class="scope-body">
+      <div class="loc">CX and EX programs · contacts linked through Directories</div>
+      <p class="simple"><strong>In simple words:</strong> when a customer complains and later answers another survey, check whether their earlier problem is now fixed.</p>
+      <div class="cols">
+        <div class="col"><div class="k">What we have today</div><p>The AI Report analyses one project at one point in time. Nothing follows one person's issue from one survey to the next.</p></div>
+        <div class="col"><div class="k">What the user gets</div><p>A fix rate per issue, branch and team, and the time it takes to fix.</p></div>
+      </div>
+      <div class="split">
+        <div class="k2">The JEV decisions</div>
+        <dl class="spec">
+          <dt>Decision 1</dt><dd>When a complaint arrives. Input: the comment. Options: the account's issue list (late delivery, billing error…). Output: "late delivery 0.93".</dd>
+          <dt>Decision 2</dt><dd>When the same contact answers again. Input: the new comment, with the stored issue named in the question. Options: fixed, still happening, worse, not mentioned.</dd>
+          <dt>How often</dt><dd>At most two decisions per complaint, and only for contacts who come back. Very low volume.</dd>
+        </dl>
+        <div class="k2">Who does what</div>
+        <div class="tw"><table>
+          <thead><tr><th>Step</th><th>Who</th><th>What happens</th></tr></thead>
+          <tbody>
+            <tr><td>Label the complaint</td><td><span class="pill who-jev">JEV</span></td><td>Decision 1</td></tr>
+            <tr><td>Save it against the contact</td><td><span class="pill who-plat">Platform</span></td><td>Stored like any response value, linked through the Directory</td></tr>
+            <tr><td>Contact answers a later survey</td><td><span class="pill who-plat">Platform</span></td><td>A lookup: does this contact have an open issue?</td></tr>
+            <tr><td>Check whether it's fixed</td><td><span class="pill who-jev">JEV</span></td><td>Decision 2</td></tr>
+            <tr><td>Fix rate per issue and branch</td><td><span class="pill who-plat">Platform</span></td><td>A count, like any report</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="ex"><div class="k2">Example</div>
+        <div class="tw"><table>
+          <thead><tr><th>Issue</th><th>Complained and answered again</th><th>Say it's fixed</th><th>Worst branch</th></tr></thead>
+          <tbody>
+            <tr><td>Billing errors</td><td class="n">212</td><td class="n">64%</td><td>Northgate · 31%</td></tr>
+            <tr><td>Late delivery</td><td class="n">148</td><td class="n">52%</td><td>Online · 40%</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <p class="watch"><strong>Watch-outs:</strong> the real work is linking a contact across surveys in the platform, not the JEV part. Does not work for anonymous projects. Programs with few repeat respondents show "not enough data".</p>
+    </div>
+  </article>
+</section>
+
+<!-- FEEDBACK OWNERS -->
+<section id="owners">
+  <article class="scope">
+    <div class="scope-top"><h3>Feedback Owners</h3><div class="tags"><span class="pill may">Low–medium effort</span><span class="pill may">Permissions</span></div></div>
+    <div class="scope-body">
+      <div class="loc">Account settings → teams · weekly inbox per team lead</div>
+      <p class="simple"><strong>In simple words:</strong> route every comment to the team that owns it, so each department head gets their own feedback without opening the full report.</p>
+      <div class="cols">
+        <div class="col"><div class="k">What we have today</div><p>Reports are organised by question and theme. Someone has to read them and decide who should act. Report Viewers and Data Visibility Rules control who sees what, but not by which team owns the issue.</p></div>
+        <div class="col"><div class="k">What the user gets</div><p>A weekly inbox per team lead with only the feedback that team owns.</p></div>
+      </div>
+      <div class="split">
+        <div class="k2">The JEV decision</div>
+        <dl class="spec">
+          <dt>Input</dt><dd>One comment</dd>
+          <dt>Options</dt><dd>The account's own team list, each with a one-line description (Billing, IT, Facilities, Front desk…). Large organisations pick the department first, then the team.</dd>
+          <dt>How often</dt><dd>One decision per comment, when the response arrives</dd>
+        </dl>
+        <div class="k2">Who does what</div>
+        <div class="tw"><table>
+          <thead><tr><th>Step</th><th>Who</th><th>What happens</th></tr></thead>
+          <tbody>
+            <tr><td>Account sets up teams</td><td><span class="pill who-plat">Platform</span></td><td>A settings list</td></tr>
+            <tr><td>Assign the comment</td><td><span class="pill who-jev">JEV</span></td><td>Picks the owning team</td></tr>
+            <tr><td>Build each team's inbox</td><td><span class="pill who-plat">Platform</span></td><td>Filter saved assignments, respecting Data Visibility Rules and the four user types</td></tr>
+            <tr><td>Weekly email</td><td><span class="pill who-plat">Platform</span></td><td>Existing email delivery</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="ex"><div class="k2">Example</div><blockquote>Facilities: 46 comments this week, 38 negative. Most are about car park lighting and the broken lift at Riverside.</blockquote></div>
+      <p class="watch"><strong>Watch-outs:</strong> a team lead must only see what they are allowed to (Admin User, Sub-User, Sub-User as Admin, Report Viewer, plus Data Visibility Rules).</p>
+    </div>
+  </article>
+</section>
+
+<!-- ================================================================ -->
+<section id="decision" class="part">
+  <div class="eyebrow">Part 2</div>
+  <h2>Decision only</h2>
+  <p>Each of these is one JEV decision that triggers one action straight away. No totals, trends or history are needed.</p>
+</section>
+
+<!-- CALLBACK -->
+<section id="callback">
+  <article class="scope">
+    <div class="scope-top"><h3>Offer a callback when it's needed</h3><div class="tags"><span class="pill yes">Low effort</span><span class="pill may">Live page</span></div></div>
+    <div class="scope-body">
+      <div class="loc">Live survey page · after a Text Box answer</div>
+      <p class="simple"><strong>In simple words:</strong> ask "Would you like someone to contact you?" only of people describing an unresolved problem.</p>
+      <div class="cols">
+        <div class="col"><div class="k">What we have today</div><p>Follow-up questions are triggered by the score, so a contact-me question goes to everyone with a low score, or to everyone.</p></div>
+        <div class="col"><div class="k">What the user gets</div><p>Service recovery in the moment, offered only where it is needed.</p></div>
+      </div>
+      <div class="split">
+        <div class="k2">The JEV decision</div>
+        <dl class="spec">
+          <dt>Input</dt><dd>The comment</dd>
+          <dt>Options</dt><dd>Describes an unresolved problem / does not</dd>
+          <dt>How often</dt><dd>One decision when the respondent clicks Next</dd>
+        </dl>
+        <div class="k2">Who does what</div>
+        <div class="tw"><table>
+          <thead><tr><th>Step</th><th>Who</th><th>What happens</th></tr></thead>
+          <tbody>
+            <tr><td>Decide</td><td><span class="pill who-jev">JEV</span></td><td>Unresolved problem or not</td></tr>
+            <tr><td>Show the contact question</td><td><span class="pill who-plat">Platform</span></td><td>Existing Question Display Logic, with the decision as its condition</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="ex"><div class="k2">Example</div><p>"My refund still hasn't arrived after three weeks" → unresolved 0.94 → the contact question appears. "Quick and easy, thanks" → the normal next page.</p></div>
+      <p class="watch"><strong>Watch-outs:</strong> runs in front of the respondent, so it needs a strict time limit and falls back to the normal path silently.</p>
+    </div>
+  </article>
+</section>
+
+<!-- INVITATION HOLD -->
+<section id="hold">
+  <article class="scope">
+    <div class="scope-top"><h3>Hold the invitation at a bad moment</h3><div class="tags"><span class="pill yes">Low effort</span><span class="pill yes">Low risk</span></div></div>
+    <div class="scope-body">
+      <div class="loc">Distribute → automated invitations · Touch Rules · Activities</div>
+      <p class="simple"><strong>In simple words:</strong> don't send a survey to someone whose latest Activity says it is a bad time to ask.</p>
+      <div class="cols">
+        <div class="col"><div class="k">What we have today</div><p>Touch Rules decide who gets invited using structured values. Activity Fields drive Touch Rules only as structured values, so a free-text note like "bereavement" is ignored.</p></div>
+        <div class="col"><div class="k">What the user gets</div><p>Fewer badly timed invitations, and fewer complaints about them.</p></div>
+      </div>
+      <div class="split">
+        <div class="k2">The JEV decision</div>
+        <dl class="spec">
+          <dt>Input</dt><dd>The latest Activity note for the contact</dd>
+          <dt>Options</dt><dd>Send / hold / don't send</dd>
+          <dt>How often</dt><dd>One decision per invitation that has a recent Activity note</dd>
+        </dl>
+        <div class="k2">Who does what</div>
+        <div class="tw"><table>
+          <thead><tr><th>Step</th><th>Who</th><th>What happens</th></tr></thead>
+          <tbody>
+            <tr><td>Decide</td><td><span class="pill who-jev">JEV</span></td><td>Send, hold or don't send</td></tr>
+            <tr><td>Apply</td><td><span class="pill who-plat">Platform</span></td><td>The decision is one condition inside Touch Rules. The rules themselves stay deterministic.</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="ex"><div class="k2">Example</div><p>"Complaint escalated to regional manager, awaiting response" → hold 0.91 → the invitation waits until the next Activity.</p></div>
+    </div>
+  </article>
+</section>
+
+<!-- FREE TEXT TO CATEGORY -->
+<section id="freetext">
+  <article class="scope">
+    <div class="scope-top"><h3>Turn free text into a category at submit</h3><div class="tags"><span class="pill new">Top pick</span><span class="pill yes">Low effort</span></div></div>
+    <div class="scope-body">
+      <div class="loc">Live survey page · free-text fields such as job title or industry</div>
+      <p class="simple"><strong>In simple words:</strong> when someone types a job title or industry, store the matching category too, so quotas, logic and segments can use it immediately.</p>
+      <div class="cols">
+        <div class="col"><div class="k">What we have today</div><p>Quotas, logic and segments work on closed answers. A typed answer like "Sr. Eng. Manager" can't count toward a "Senior management" quota until someone recodes it by hand.</p></div>
+        <div class="col"><div class="k">What the user gets</div><p>Respondents type naturally; the data arrives already categorised.</p></div>
+      </div>
+      <div class="split">
+        <div class="k2">The JEV decision</div>
+        <dl class="spec">
+          <dt>Input</dt><dd>The typed answer</dd>
+          <dt>Options</dt><dd>The category list the author attached to that question (seniority, industry, department…), plus "can't tell"</dd>
+          <dt>How often</dt><dd>One decision per free-text answer, at submit</dd>
+        </dl>
+        <div class="k2">Who does what</div>
+        <div class="tw"><table>
+          <thead><tr><th>Step</th><th>Who</th><th>What happens</th></tr></thead>
+          <tbody>
+            <tr><td>Decide</td><td><span class="pill who-jev">JEV</span></td><td>Picks the category</td></tr>
+            <tr><td>Store and use</td><td><span class="pill who-plat">Platform</span></td><td>Saved next to the typed answer; quotas, logic and segments read it like a closed answer</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="ex"><div class="k2">Examples</div>
+        <div class="tw"><table>
+          <thead><tr><th>Typed answer</th><th>Category</th><th>Confidence</th></tr></thead>
+          <tbody>
+            <tr><td>"Sr. Eng. Manager"</td><td>Senior management</td><td class="n">0.92</td></tr>
+            <tr><td>"Asst. Director of Ops"</td><td>Director</td><td class="n">0.90</td></tr>
+            <tr><td>"freelance"</td><td>Can't tell</td><td class="n">0.71</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <p class="watch"><strong>Watch-outs:</strong> "can't tell" must never count toward a quota. This is close to the answer-option matching already on the JEV Scope page and can share that engine.</p>
+    </div>
+  </article>
+</section>
+
+<!-- IDENTITY WARNING -->
+<section id="identify">
+  <article class="scope">
+    <div class="scope-top"><h3>"This might identify you" warning</h3><div class="tags"><span class="pill yes">Low effort</span><span class="pill may">Live page</span></div></div>
+    <div class="scope-body">
+      <div class="loc">Live survey page · anonymous and semi-anonymous EX projects</div>
+      <p class="simple"><strong>In simple words:</strong> before an employee submits, warn them if their comment could reveal who they are, so they can edit it.</p>
+      <div class="cols">
+        <div class="col"><div class="k">What we have today</div><p>Anonymity removes email, IP and participation time. Nothing checks whether the words themselves give the writer away.</p></div>
+        <div class="col"><div class="k">What the user gets</div><p>Employees trust anonymous surveys more, and fewer identifying comments reach managers.</p></div>
+      </div>
+      <div class="split">
+        <div class="k2">The JEV decision</div>
+        <dl class="spec">
+          <dt>Input</dt><dd>The comment</dd>
+          <dt>Options</dt><dd>Identifies the writer / names someone else / safe</dd>
+          <dt>How often</dt><dd>One decision per comment, at submit</dd>
+        </dl>
+        <div class="k2">Who does what</div>
+        <div class="tw"><table>
+          <thead><tr><th>Step</th><th>Who</th><th>What happens</th></tr></thead>
+          <tbody>
+            <tr><td>Decide</td><td><span class="pill who-jev">JEV</span></td><td>Identifying or safe</td></tr>
+            <tr><td>Show the note</td><td><span class="pill who-plat">Platform</span></td><td>"Your comment may identify you. Edit?" The respondent can edit or submit as is.</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="ex"><div class="k2">Example</div><p>"As the only night-shift nurse in Ward 4, I never get breaks" → identifies the writer 0.93 → the note appears.</p></div>
+      <p class="watch"><strong>Watch-outs:</strong> never blocks and never stores anything extra. Only the comment text is sent. This is the respondent-side counterpart of the EX anonymity flag on the JEV Scope page.</p>
+    </div>
+  </article>
+</section>
+
+<!-- QUESTION TYPE -->
+<section id="qtype">
+  <article class="scope">
+    <div class="scope-top"><h3>Pick the question type for the author</h3><div class="tags"><span class="pill yes">Low effort</span><span class="pill yes">Low risk</span></div></div>
+    <div class="scope-body">
+      <div class="loc">Design → question builder</div>
+      <p class="simple"><strong>In simple words:</strong> as the author types a question, pre-select the right question type and answer scale.</p>
+      <div class="cols">
+        <div class="col"><div class="k">What we have today</div><p>The author picks the question type by hand. Create with AI builds whole surveys, but adding a single question is manual.</p></div>
+        <div class="col"><div class="k">What the user gets</div><p>Faster building, and fewer questions with a scale that doesn't fit the wording.</p></div>
+      </div>
+      <div class="split">
+        <div class="k2">The JEV decision</div>
+        <dl class="spec">
+          <dt>Input</dt><dd>The question text</dd>
+          <dt>Options</dt><dd>Rating, NPS, multiple choice, matrix, open text, yes/no…</dd>
+          <dt>How often</dt><dd>One decision when the author stops typing</dd>
+        </dl>
+        <div class="k2">Who does what</div>
+        <div class="tw"><table>
+          <thead><tr><th>Step</th><th>Who</th><th>What happens</th></tr></thead>
+          <tbody>
+            <tr><td>Decide</td><td><span class="pill who-jev">JEV</span></td><td>Picks the question type</td></tr>
+            <tr><td>Pre-select</td><td><span class="pill who-plat">Platform</span></td><td>Sets the type and a default scale; the author can change it</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="ex"><div class="k2">Example</div><p>"How likely are you to recommend us to a friend?" → NPS 0.97. "Which of these did you use today?" → multiple choice 0.91.</p></div>
+    </div>
+  </article>
+</section>
+
+<!-- INVITATION REPLIES -->
+<section id="replies">
+  <article class="scope">
+    <div class="scope-top"><h3>Handle replies to invitation emails</h3><div class="tags"><span class="pill may">To confirm first</span></div></div>
+    <div class="scope-body">
+      <div class="loc">Distribute → email invitations</div>
+      <p class="simple"><strong>In simple words:</strong> when someone replies to a survey invitation email, act on what they said.</p>
+      <div class="cols">
+        <div class="col"><div class="k">What we have today</div><p>To confirm: whether replies to invitation emails reach Sogolytics at all. The help center doesn't say.</p></div>
+        <div class="col"><div class="k">What the user gets</div><p>"Please remove me" and "wrong person" replies are handled, and real feedback isn't lost.</p></div>
+      </div>
+      <div class="split">
+        <div class="k2">The JEV decision</div>
+        <dl class="spec">
+          <dt>Input</dt><dd>The reply text</dd>
+          <dt>Options</dt><dd>Unsubscribe / wrong person / out of office / feedback / question</dd>
+          <dt>How often</dt><dd>One decision per reply</dd>
+        </dl>
+        <div class="k2">Who does what</div>
+        <div class="tw"><table>
+          <thead><tr><th>Step</th><th>Who</th><th>What happens</th></tr></thead>
+          <tbody>
+            <tr><td>Decide</td><td><span class="pill who-jev">JEV</span></td><td>Picks the reply type</td></tr>
+            <tr><td>Act</td><td><span class="pill who-plat">Platform</span></td><td>Unsubscribe the contact, flag the address, ignore out-of-office, or forward feedback to the account</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <p class="watch"><strong>Watch-outs:</strong> if replies are not captured today, capturing them comes first and is platform work. Wrongly unsubscribing someone is the safer mistake.</p>
+    </div>
+  </article>
+</section>
+
+<section id="order" class="part">
+  <h2>Suggested order</h2>
+  <div class="rank">
+    <span class="r">1</span><p><strong>Free text to category.</strong> One decision, almost no platform work, and it unblocks quotas and segmentation.</p>
+    <span class="r">2</span><p><strong>Survey Coach, before launch.</strong> One decision per question saved, low risk, seen by every author.</p>
+    <span class="r">3</span><p><strong>Callback offer</strong> and <strong>invitation hold.</strong> Single decisions that trigger existing logic and Touch Rules.</p>
+    <span class="r">4</span><p><strong>Virtual Questions,</strong> going forward plus sampled estimates for past data.</p>
+    <span class="r">5</span><p><strong>Fix Tracker</strong> and <strong>Feedback Owners,</strong> once contact linkage and team permissions are designed.</p>  </div>
+</section>
+
+<section id="open" class="part">
+  <h2>Open questions</h2>
+  <div class="grid">
+    <div class="panel"><div class="k">JEV</div><ul>
+      <li>Pricing and rate limits per decision, which decide whether full back-runs or only samples are affordable.</li>
+      <li>Response time, for the three features that run on the live survey page.</li>
+      <li>Data residency and HIPAA handling.</li>
+    </ul></div>
+    <div class="panel"><div class="k">Platform</div><ul>
+      <li>Can contacts be linked across surveys today, for Fix Tracker?</li>
+      <li>Do replies to invitation emails reach Sogolytics?</li>
+      <li>Does the builder check question wording today?</li>
+    </ul></div>
+    <div class="panel"><div class="k">Product</div><ul>
+      <li>Should inferred answers count in headline metrics, or only in breakdowns?</li>
+      <li>Do authors accept that some respondents see fewer questions with "say it once"?</li>    </ul></div>
+  </div>
+</section>
+
+<footer>Companion to the JEV Scope page. Ideas checked against the AI Report open-ended analysis (theme impact, dissonance and cohort panels) to avoid repeating it. All figures and quotes are illustrative. The ±5 point sample margin assumes a simple random sample of about 400 comments at 95% confidence.</footer>
+
+</div>
+
+</body></html>

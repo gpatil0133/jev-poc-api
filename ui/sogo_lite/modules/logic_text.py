@@ -20,13 +20,21 @@ OP_LABEL = "answer is about…"
 def add_rule(survey_no: int, source_qid: str, source: str, value: str, description: str,
              target: str, min_prob: Optional[float]) -> tuple[bool, str]:
     """Create an "answer is about…" rule. A typed topic is added to the question's
-    class set as a yes/no question. The only action offered is showing a question:
+    class set as a yes/no question, a ready-made meaning as its catalog task. The only
+    action offered is showing a question:
     a meaning condition shows a follow-up, it never skips one."""
     value = (value or "").strip()
     if not value:
         return False, "Type a topic or pick a class."
     if source == "class":
         ref = value
+    elif source == "ready":
+        # A ready-made meaning from the catalog, such as "describes an unresolved
+        # problem" (the callback offer): shown only to the people it applies to.
+        ok, message = shared_classes.ensure_task(survey_no, source_qid, value)
+        if not ok:
+            return False, message
+        ref = f"{value}|yes"
     else:
         about = f"{value}: {description.strip()}" if description.strip() else value
         spec_id = f"about_{shared_classes.slug(value)}"

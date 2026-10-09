@@ -10,7 +10,8 @@ from starlette.datastructures import FormData
 
 from sogo_lite import create_ai, db, engine, events, modules, seed, suggestions
 from sogo_lite.modules import (
-    alert_meaning, design_hints, logic_text, pii, quiz_scoring, shared_classes, tag_suggest,
+    alert_meaning, free_text, logic_text, pii, quiz_scoring, shared_classes, tag_suggest,
+    virtual_questions,
 )
 from sogo_lite.web import back, form_data, project_or_404, redirect, render, to_float, unsynced_class_sets
 
@@ -72,7 +73,7 @@ def _raise_question_saved(question_id: int) -> None:
 def design(request: Request, survey_no: int) -> HTMLResponse:
     proj = project_or_404(survey_no)
     questions = engine.questions(survey_no)
-    hints = {q["id"]: len(design_hints.pending(q["id"])) for q in questions}
+    hints = {q["id"]: len(suggestions.question_hints(q["id"])) for q in questions}
     class_sets = {cs["qid"]: cs for cs in db.rows("SELECT qid, dirty FROM class_set WHERE survey_no=?", survey_no)}
     return render(request, "design.html", project=proj, tab="questions", pages=engine.pages(survey_no),
                   questions=questions, hints=hints, class_sets=class_sets,
@@ -120,7 +121,8 @@ def _editor(request: Request, survey_no: int, question_id: int, **extra: Any) ->
         catalog=shared_classes.comment_tasks() if classes_on else [],
         options_text="\n".join(f"{o['text']} | {o['points']:g}" if o["points"] else o["text"]
                                for o in question["options"]),
-        hints=design_hints.pending(question_id), **extra)
+        hints=suggestions.question_hints(question_id),
+        categories=free_text.get(survey_no, question["qid"]) if question["type"] == "text" else None, **extra)
 
 
 @router.get("/design/{survey_no}/q/{question_id}", response_class=HTMLResponse)
@@ -160,7 +162,7 @@ def delete_question(survey_no: int, question_id: int):
 @router.get("/design/{survey_no}/q/{question_id}/hints", response_class=HTMLResponse)
 def question_hints(request: Request, survey_no: int, question_id: int) -> HTMLResponse:
     """The hints under a question. The editor polls this, because hints arrive after the save."""
-    return render(request, "_hints.html", hints=design_hints.pending(question_id))
+    return render(request, "_hints.html", hints=suggestions.question_hints(question_id))
 
 
 @router.post("/suggestions/{suggestion_id}/{action}")
@@ -209,11 +211,16 @@ def _describe_logic(rule: dict[str, Any], by_qid: dict[str, dict[str, Any]]) -> 
     elif rule["op"] == logic_text.OP:
         condition = f"answer is about {rule['operand'].replace('|', ' = ')}" + (
             f" (min {rule['min_prob']:.2f})" if rule["min_prob"] is not None else " (band act)")
+    elif rule["op"] == virtual_questions.SKIP_OP:
+        vq = virtual_questions.get(int(rule["operand"])) if str(rule["operand"]).isdigit() else None
+        condition = f"comment already answers \"{vq['wording'] if vq else '?'}\" (inferred, band act)"
     else:
         condition = engine.TEXT_OPS.get(rule["op"], rule["op"]) + (
             f" \"{rule['operand']}\"" if rule["op"] not in ("answered", "not_answered") else "")
-    target = (f"show {rule['target']}: {(by_qid.get(rule['target']) or {}).get('wording', '?')}"
-              if rule["action"] == "show" else f"jump to page {rule['target']}")
+    if rule["action"] in ("show", virtual_questions.SKIP_ACTION):
+        target = f"{rule['action']} {rule['target']}: {(by_qid.get(rule['target']) or {}).get('wording', '?')}"
+    else:
+        target = f"jump to page {rule['target']}"
     return f"If {rule['source_qid']} {condition} → {target}"
 
 
@@ -225,12 +232,14 @@ def logic(request: Request, survey_no: int, src: Optional[str] = None) -> HTMLRe
     source = by_qid.get(src or "")
     about_on = modules.is_on(logic_text.MODULE) and bool(source) and source["type"] == "text"
     rules = [{"id": r["id"], "op": r["op"], "text": _describe_logic(r, by_qid),
-              "inactive": r["op"] == logic_text.OP and not modules.is_on(logic_text.MODULE)}
+              "inactive": (r["op"] == logic_text.OP and not modules.is_on(logic_text.MODULE))
+              or (r["op"] == virtual_questions.SKIP_OP and not modules.is_on(virtual_questions.MODULE))}
              for r in engine.logic_rules(survey_no)]
     return render(
         request, "logic.html", project=proj, tab="logic", questions=questions, rules=rules, source=source,
         pages=engine.pages(survey_no), option_ops=engine.OPTION_OPS, text_ops=engine.TEXT_OPS,
         about_on=about_on, about_label=logic_text.OP_LABEL,
+        ready_made=alert_meaning.ready_made() if about_on else [],
         class_refs=shared_classes.class_refs(shared_classes.get(survey_no, source["qid"])) if about_on else [])
 
 
@@ -244,7 +253,8 @@ def add_logic(survey_no: int, form: FormData = Depends(form_data)):
             return redirect(here, "Pick the question to show.")
         _, message = logic_text.add_rule(
             survey_no, source_qid, form.get("about_source") or "topic",
-            form.get("class_ref") if form.get("about_source") == "class" else form.get("topic"),
+            {"class": form.get("class_ref"), "ready": form.get("task_id")}.get(form.get("about_source"),
+                                                                              form.get("topic")),
             form.get("description") or "", form.get("target_q"), to_float(form.get("min_prob")))
         return redirect(here, message)
     action = form.get("action") if form.get("action") in engine.ACTIONS else "show"

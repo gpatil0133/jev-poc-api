@@ -9,7 +9,7 @@ from fastapi.responses import HTMLResponse
 from starlette.datastructures import FormData
 
 from sogo_lite import db, engine, events, modules
-from sogo_lite.modules import pii, quiz_scoring, shared_classes
+from sogo_lite.modules import free_text, identity, inferred, pii, quiz_scoring, shared_classes, virtual_questions
 from sogo_lite.web import form_data, project_or_404, redirect, render, to_float
 
 router = APIRouter()
@@ -39,7 +39,8 @@ def _response_or_404(response_id: int) -> dict[str, Any]:
 
 
 def _page(request: Request, resp: dict[str, Any], provided: Optional[dict[str, engine.Answer]] = None,
-          missing: Optional[list[str]] = None, encouraged: Optional[list[str]] = None) -> HTMLResponse:
+          missing: Optional[list[str]] = None, encouraged: Optional[list[str]] = None,
+          identity_notes: Optional[dict[str, str]] = None, reminded: bool = False) -> HTMLResponse:
     proj = engine.project(resp["survey_no"])
     if resp["submitted_at"]:
         return render(request, "take_done.html", project=proj, response=resp)
@@ -48,7 +49,7 @@ def _page(request: Request, resp: dict[str, Any], provided: Optional[dict[str, e
         q["low"], q["high"] = engine.metric_range(q) if q["type"] == "metric" else (0, 0)
     return render(request, "take_page.html", project=proj, response=resp, questions=questions,
                   provided=provided or engine.answers(resp["id"]), missing=missing or [],
-                  encouraged=encouraged or [],
+                  encouraged=encouraged or [], identity=identity_notes or {}, reminded=reminded,
                   pages=db.val("SELECT MAX(ord) FROM page WHERE survey_no=?", resp["survey_no"]))
 
 
@@ -80,6 +81,11 @@ def take_next(request: Request, response_id: int, background: BackgroundTasks,
     if missing["encouraged"] and not form.get("reminded"):
         # Encouraged Response: ask once, then let the participant continue.
         return _page(request, resp, provided, encouraged=missing["encouraged"])
+    if not form.get("identity_ack"):
+        # Shown once: the participant edits the comment or clicks Next again to send it as it is.
+        notes = identity.check(resp, engine.project(resp["survey_no"]), visible, provided)
+        if notes:
+            return _page(request, resp, provided, identity_notes=notes, reminded=bool(form.get("reminded")))
     # Rules and alerts run after the response is sent, so the participant never waits on them.
     engine.advance(response_id, provided, defer=background.add_task)
     return redirect(f"/take/r/{response_id}")
@@ -97,8 +103,12 @@ def responses(request: Request, survey_no: int) -> HTMLResponse:
         resp["notes"] = db.loads(resp["notes"], [])
         resp["alerts"] = db.val("SELECT COUNT(*) FROM sink_log WHERE response_id=?", resp["id"])
         resp["comment"] = next((a["text"] for a in answers.values() if a.get("text")), "")
+    open_questions = [q for q in engine.questions(survey_no) if q["type"] == "text"]
+    categories = [{"q": q, **counts} for q in open_questions
+                  if (counts := free_text.counts(survey_no, q)) is not None] \
+        if modules.is_on(free_text.MODULE) else []
     return render(request, "responses.html", project=proj, tab="responses", responses=found,
-                  open_questions=[q for q in engine.questions(survey_no) if q["type"] == "text"])
+                  open_questions=open_questions, categories=categories)
 
 
 @router.get("/responses/{survey_no}/r/{response_id}", response_class=HTMLResponse)
@@ -118,6 +128,9 @@ def response_detail(request: Request, survey_no: int, response_id: int) -> HTMLR
         score=score, available=available, post=engine.post_populated(response_id),
         notes=db.loads(resp["notes"], []), sinks=sinks, classifications=shared_classes.results_for(response_id),
         pii=pii.flags(response_id) if modules.is_on(pii.ANSWER_MODULE) else {},
+        inferred=inferred.results_for(response_id),
+        virtual=virtual_questions.answers_for(response_id, survey_no)
+        if modules.is_on(virtual_questions.MODULE) else [],
         calls=db.val("SELECT COUNT(*) FROM gateway_call_log WHERE response_id=?", response_id))
 
 

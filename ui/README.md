@@ -21,7 +21,7 @@ cd ui
 ```
 
 Open http://127.0.0.1:8020. The first start creates `ui/data/sogo_lite.db` and seeds
-six example projects.
+seven example projects.
 
 The mock reads the repo's `.env`, the same file the gateway reads. Set
 `SOGO_LITE_GATEWAY_TOKEN` there (a gateway JWT, or a corp_no when the gateway runs
@@ -99,6 +99,12 @@ calls the gateway.
 | 9004 | Staff pulse (EX, Anonymous) | Scopes 2 (anonymity), 4 |
 | 9005 | Food-safety quiz (Assessment) | Scope 8 |
 | 9006 | Large tag list (CX) | Scope 6 limit: one category of 500 tags |
+| 9007 | Harbour & Pine feedback (CX) | The feature concepts: 24 responses, two Virtual Questions, a category list, owners and Fix Tracker switched on |
+
+The seed also adds six teams, four known issues and seven Distribute contacts.
+Seeded responses are not classified: use "Answer a sample" on the Virtual
+Questions tab and "Read the responses already in these projects" on Owners or
+Fix Tracker.
 
 Scope 5 and the scope 4 checks run on a scratch project that the scenario runner
 creates and deletes.
@@ -107,6 +113,48 @@ Class sets are saved to the gateway as bindings under these survey numbers, for
 the tenant in the token. The gateway has no endpoint that deletes a binding. If
 9001 to 9006 could clash with real bindings for that tenant, change the constants
 at the top of `sogo_lite/seed.py` before the first start.
+
+## Feature concepts
+
+The ten features of [docs/JEV-Feature-concepts.html](../docs/JEV-Feature-concepts.html)
+are built as modules F1 to F10, with project 9007 (Harbour & Pine feedback) seeded
+to show them. None of them has been measured against a model yet: run the `fc_*`
+sets on the Evaluation page first.
+
+| Feature | Where | How it is built |
+|---|---|---|
+| Callback offer | Logic | A ready-made meaning (`meaning.unresolved_problem`) in the scope 3 rule editor. No switch of its own |
+| Survey Coach, before launch (F1) | Question editor | A wording hint with fixed advice per flaw. The classifier cannot write the reworded question |
+| Question type pick (F2) | Question editor | A hint to change the type, after the question is saved |
+| Free text to category (F3) | Text Box editor, Responses | A category list on a Text Box; counts use confident matches only |
+| Identity warning (F4) | Live survey page | Anonymous projects only; shown once before the page is saved, never blocks |
+| Virtual Questions (F5) | Virtual Questions tab, Responses | Preview, sample or full run, answers at submit, an alert condition, and "say it once" |
+| Survey Coach, after launch (F6) | Coach tab | Comments matched to the survey's closed questions; topics are named from a list the author gives |
+| Feedback Owners (F7) | Owners | Team list, inbox per team, digest emails to the outbox |
+| Fix Tracker (F8) | Fix Tracker | Known issues, a case per contact, fix rate |
+| Invitation hold (F9), replies (F10) | Distribute | A stand-in for Directories, Activities and invitations |
+
+F3, F5, F7 and F8 each ask a question about a text answer. They share one classify
+call per answer (`modules/inferred.py`), made at submit, or at Next when a "say it
+once" rule needs the answer earlier. Each answer is stored with the hash of its
+question, so adding a Virtual Question later asks only that one. Only band `act`
+is counted, routed or acted on.
+
+What the mock does not show:
+
+- **Permissions.** One account and no login, so who may open a team's inbox is not modelled.
+- **Contact linkage.** Fix Tracker uses the respondent name typed on the response as
+  the contact. Linking through a Directory across surveys is not built.
+- **Real distribution.** Invitations and replies are entered on the Distribute page.
+  Whether real replies reach Sogolytics is still an open question.
+- **Account-level question library, reports, filters and export** for Virtual Questions.
+- **Speed.** Callback offer, "say it once" and the identity warning run while the
+  participant waits, on the 300 ms respondent timeout. Against Jev's measured median
+  of 323 ms most of those calls will fall back to the default path.
+- **Large surveys.** The blind-spot check sends at most 30 closed questions and does
+  not shortlist them first.
+- **Back-runs through `/v1/jobs`.** A Virtual Question run uses batch calls of 64,
+  because no endpoint returns a job's output.
 
 ## Scenario runner
 
@@ -202,12 +250,13 @@ ui/
     gateway.py           the gateway client: fallback contract, fault switches, call log
     events.py            platform events
     engine.py            baseline platform: questions, Logic, Tags, scores, alerts, the survey flow
-    modules/             one file per scope (4, 5 and 9 share design_hints.py; pii.py holds 9 and 10)
+    modules/             one file per scope (4, 5 and 9 share design_hints.py; pii.py holds 9 and 10),
+                         and one per feature concept (inferred.py is what F3, F5, F7 and F8 share)
     create_ai.py         Create with AI stub
-    seed.py              the six seeded projects and their responses
+    seed.py              the seven seeded projects and their responses
     scenarios.py         the acceptance checks and the runner
     evaluation.py        the Evaluation page's runner (the sets live in ../simulators)
-    routes/              design, participate, tools (Inspector, Settings, Scenarios)
+    routes/              design, participate, features (the feature-concept pages), tools (Inspector, Settings, Scenarios)
     templates/, static/  server-rendered pages
   tests/                 plain-function tests against an in-process fake gateway
 ```

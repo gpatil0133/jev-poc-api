@@ -8,7 +8,14 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from sogo_lite import db
-from sogo_lite.modules import design_hints, tag_suggest
+from sogo_lite.modules import design_hints, survey_coach, tag_suggest
+
+COACH_KINDS = tuple(survey_coach.KIND_MODULES)
+
+
+def question_hints(question_id: int) -> list[dict[str, Any]]:
+    """Every pending builder hint on a question: scopes 4, 5 and 9, then Survey Coach."""
+    return design_hints.pending(question_id) + survey_coach.pending(question_id)
 
 
 def get(suggestion_id: int) -> Optional[dict[str, Any]]:
@@ -21,6 +28,8 @@ def accept(suggestion_id: int) -> bool:
         return False
     if suggestion["kind"] == "tag":
         tag_suggest.apply(suggestion)
+    elif suggestion["kind"] in COACH_KINDS:
+        survey_coach.apply(suggestion)
     else:
         design_hints.apply(suggestion)
     db.run("UPDATE suggestion SET status='accepted' WHERE id=?", suggestion_id)

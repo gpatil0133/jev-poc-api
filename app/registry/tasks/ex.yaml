@@ -1,0 +1,14 @@
+# Employee-experience checks (feature concept "This might identify you").
+# The options are copies of simulators/build_feature_dataset.py TASKS: keep them in step.
+
+- id: ex.identity_risk
+  type: choice
+  description: "Whether an anonymous employee comment could reveal who a specific person is."
+  instructions: "Could this anonymous employee comment reveal who a specific person is?"
+  criteria:
+    identifies_writer:  "a unique role, shift, location, tenure or event could reveal who wrote it"
+    names_someone_else: "names or clearly points to another specific person"
+    safe:               "no specific person could be identified"
+  state: ["survey_question", "answer"]
+  model: auto
+  thresholds: {act: 0.85, suggest: 0.60}

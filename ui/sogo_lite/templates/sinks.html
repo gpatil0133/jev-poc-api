@@ -20,7 +20,7 @@
       <td>{{ e.rule }}</td>
       <td>{% if sink == 'email' %}<div><strong>To:</strong> {{ e.payload.to }}</div><div><strong>{{ e.payload.subject }}</strong></div><pre class="plain">{{ e.payload.body }}</pre>
           {% else %}<pre>{{ e.payload|pretty }}</pre>{% endif %}</td>
-      <td class="narrow"><a href="/responses/{{ e.survey_no }}/r/{{ e.response_id }}">response #{{ e.response_id }}</a></td>
+      <td class="narrow">{% if e.response_id %}<a href="/responses/{{ e.survey_no }}/r/{{ e.response_id }}">response #{{ e.response_id }}</a>{% endif %}</td>
     </tr>
   {% else %}<tr><td colspan="5" class="muted">Nothing here yet.</td></tr>{% endfor %}
   </tbody>

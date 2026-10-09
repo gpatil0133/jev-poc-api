@@ -72,10 +72,11 @@ def delete_project(survey_no: int) -> None:
     for q in db.rows("SELECT id FROM question WHERE survey_no=?", survey_no):
         delete_question(q["id"])
     for rid in [r["id"] for r in db.rows("SELECT id FROM response WHERE survey_no=?", survey_no)]:
-        for table in ("response_answer", "post_populate", "classification_result", "pii_flag"):
+        for table in ("response_answer", "post_populate", "classification_result", "pii_flag", "inferred_result"):
             db.run(f"DELETE FROM {table} WHERE response_id=?", rid)
     for table in ("response", "page", "logic_rule", "alert_rule", "sink_log", "class_set",
-                  "suggestion", "key_point_set", "project"):
+                  "suggestion", "key_point_set", "category_list", "virtual_question", "coach_run",
+                  "project_feature", "issue_case", "invitation", "project"):
         db.run(f"DELETE FROM {table} WHERE survey_no=?", survey_no)
 
 
@@ -163,10 +164,12 @@ def delete_question(question_id: int) -> None:
         db.run("DELETE FROM option_tag WHERE option_id=?", option["id"])
     db.run("DELETE FROM answer_option WHERE question_id=?", question_id)
     db.run("DELETE FROM question_tag WHERE question_id=?", question_id)
-    db.run("DELETE FROM logic_rule WHERE survey_no=? AND (source_qid=? OR (action='show' AND target=?))",
+    db.run("DELETE FROM logic_rule WHERE survey_no=? AND (source_qid=? OR (action IN ('show', 'skip') AND target=?))",
            q["survey_no"], q["qid"], q["qid"])
     db.run("DELETE FROM class_set WHERE survey_no=? AND qid=?", q["survey_no"], q["qid"])
     db.run("DELETE FROM key_point_set WHERE survey_no=? AND qid=?", q["survey_no"], q["qid"])
+    db.run("DELETE FROM category_list WHERE survey_no=? AND qid=?", q["survey_no"], q["qid"])
+    db.run("DELETE FROM virtual_question WHERE survey_no=? AND source_qid=?", q["survey_no"], q["qid"])
     db.run("DELETE FROM suggestion WHERE target_type='question' AND target_id=?", question_id)
     db.run("DELETE FROM question WHERE id=?", question_id)
 
@@ -298,10 +301,16 @@ def _is_visible(q: dict[str, Any], show_rules: dict[str, list[dict]], ctx: Conte
 
 def visible_questions(survey_no: int, page_ord: int, ctx: Context) -> list[dict[str, Any]]:
     show_rules: dict[str, list[dict]] = {}
+    skip_rules: dict[str, list[dict]] = {}
     for rule in logic_rules(survey_no):
         if rule["action"] == "show":
             show_rules.setdefault(rule["target"], []).append(rule)
-    return [q for q in questions(survey_no) if q["page_ord"] == page_ord and _is_visible(q, show_rules, ctx)]
+        elif rule["action"] == "skip":
+            skip_rules.setdefault(rule["target"], []).append(rule)
+    # A "skip" rule hides a question only while it is met, so a rule that cannot be
+    # evaluated (module off, no result) leaves the question asked.
+    return [q for q in questions(survey_no) if q["page_ord"] == page_ord and _is_visible(q, show_rules, ctx)
+            and not any(rule_met(rule, ctx) for rule in skip_rules.get(q["qid"], []))]
 
 
 def _next_page(survey_no: int, page_ord: int, ctx: Context) -> Optional[int]:

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Fix Tracker{% endblock %}
+{% block content %}
+<h1>Fix Tracker</h1>
+{% if not on %}<p class="banner warn">The Fix Tracker module is off. No case is opened or updated.</p>{% endif %}
+<p class="muted">When a contact reports one of the known issues, a case is opened. When the same contact answers a later survey, their new comment is checked for whether that problem is fixed. The contact is the respondent name on the response, standing in for a Directory contact, so nothing is tracked in an Anonymous project.</p>
+
+<section class="card">
+  <h2>Fix rate</h2>
+  <table>
+    <thead><tr><th>Issue</th><th>Cases</th><th>Complained and answered again</th><th>Say it's fixed</th><th>Say it's worse</th><th>Fix rate by project</th></tr></thead>
+    <tbody>{% for r in report %}
+      <tr><td><strong>{{ r.issue }}</strong> <span class="muted">{{ r.description }}</span></td><td>{{ r.cases }}</td><td>{{ r.answered_again }}</td>
+          <td>{% if r.fix_rate is not none %}<strong>{{ r.fix_rate }}%</strong> <span class="muted">({{ r.fixed }})</span>{% else %}<span class="muted">not enough data</span>{% endif %}</td>
+          <td>{{ r.worse or '' }}</td>
+          <td class="muted">{% for name, rate in r.by_project.items() %}{{ name }} {{ rate }}%{{ ' · ' if not loop.last }}{% endfor %}</td></tr>
+    {% else %}<tr><td colspan="6" class="muted">No known issues yet.</td></tr>{% endfor %}</tbody>
+  </table>
+  <form method="post" action="/fix-tracker"><button name="action" value="backfill" class="ghost">Read the responses already in these projects</button>
+    <span class="muted">Oldest first, so an earlier complaint is known before the same contact's later answer.</span></form>
+</section>
+
+<section class="card">
+  <h2>Cases</h2>
+  <table>
+    <thead><tr><th>Case</th><th>Contact</th><th>Issue</th><th>Opened by</th><th>Status</th><th>Status from</th></tr></thead>
+    <tbody>{% for c in cases %}
+      <tr><td>#{{ c.id }}</td><td>{{ c.contact }}</td><td>{{ c.issue }}</td>
+          <td><a href="/responses/{{ c.survey_no }}/r/{{ c.response_id }}">response #{{ c.response_id }}</a> <span class="muted">{{ c.project }} · {{ c.opened_at }}</span></td>
+          <td><span class="pill {{ {'fixed': 'ok', 'open': ''}.get(c.status, 'warn') }}">{{ statuses.get(c.status, 'Open: no later answer') }}</span></td>
+          <td>{% if c.status_response_id %}<a href="/responses/{{ c.survey_no }}/r/{{ c.status_response_id }}">response #{{ c.status_response_id }}</a> <span class="muted">{{ c.status_at }}</span>{% endif %}</td></tr>
+    {% else %}<tr><td colspan="6" class="muted">No cases yet.</td></tr>{% endfor %}</tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>Known issues</h2>
+  <form method="post" action="/fix-tracker" class="stack">
+    <label>One issue per line as <code>issue: how a customer would describe it</code>
+      <textarea name="lines" rows="6">{% for i in issues %}{{ i.name }}: {{ i.description }}
+{% endfor %}</textarea></label>
+    <div class="row"><button name="action" value="issues">Save issues</button></div>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Projects</h2>
+  <form method="post" action="/fix-tracker" class="stack">
+    {% for p in projects %}<label class="check"><input type="checkbox" name="projects" value="{{ p.survey_no }}" {{ 'checked' if p.survey_no in enabled }} {{ 'disabled' if p.anonymous }}> #{{ p.survey_no }} {{ p.name }}{% if p.anonymous %} <span class="pill">Anonymous: not tracked</span>{% endif %}</label>{% endfor %}
+    <div class="row"><button name="action" value="projects">Save projects</button></div>
+  </form>
+</section>
+{% endblock %}

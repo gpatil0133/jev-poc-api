@@ -1,0 +1,30 @@
+# Distribution checks (feature concepts "Invitation hold" and "Invitation replies").
+# Neither reads a survey answer: the state is an Activity note or the text of an
+# email reply, passed in `context`.
+# The options are copies of simulators/build_feature_dataset.py TASKS: keep them in step.
+
+- id: invite.timing
+  type: choice
+  description: "Whether a survey invitation should go out, given the contact's latest Activity note."
+  instructions: "Given this latest note on the contact, should a survey invitation go out now?"
+  criteria:
+    send:      "nothing in the note makes this a bad time"
+    hold:      "a temporary situation makes this a bad time: open complaint, dispute, illness, bereavement, away"
+    dont_send: "the contact should not be surveyed at all: deceased, asked for no contact, legal action, wrong person"
+  state: ["activity_note"]
+  model: auto
+  thresholds: {act: 0.85, suggest: 0.60}
+
+- id: invite.reply_type
+  type: choice
+  description: "Kind of reply to a survey invitation email."
+  instructions: "What kind of reply to a survey invitation email is this?"
+  criteria:
+    unsubscribe:   "asks to stop receiving emails or to be removed"
+    wrong_person:  "says the email reached the wrong person, or the person has left"
+    out_of_office: "automatic reply saying the person is away"
+    feedback:      "gives their opinion or experience instead of taking the survey"
+    question:      "asks about the survey or how to take it"
+  state: ["email_reply"]
+  model: auto
+  thresholds: {act: 0.85, suggest: 0.60}

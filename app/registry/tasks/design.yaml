@@ -1,0 +1,35 @@
+# Builder checks on a survey question (feature concepts "Survey Coach" and
+# "Question type pick"). The state is the question wording plus its answer
+# options, passed in `context`; no respondent data is involved.
+# The options are copies of simulators/build_feature_dataset.py TASKS: keep them in step.
+
+- id: design.wording_flaw
+  type: choice
+  description: "Wording problem of a survey question, or fine."
+  instructions: "Does this survey question have a wording problem?"
+  criteria:
+    leading:             "wording pushes the respondent toward a particular answer"
+    double_barrelled:    "asks about two different things in one question"
+    vague_time_frame:    "unclear period or frequency, such as 'recently' or 'regularly'"
+    jargon:              "uses internal terms or abbreviations a respondent may not know"
+    sensitive:           "asks for private information such as income, health or religion"
+    overlapping_options: "answer options overlap or leave gaps"
+    fine:                "clear, neutral, one topic, and the options fit"
+  state: ["question", "answer_options"]
+  model: auto
+  thresholds: {act: 0.85, suggest: 0.60}
+
+- id: design.question_type
+  type: choice
+  description: "Question type that fits a survey question's wording."
+  instructions: "Which question type fits this survey question best?"
+  criteria:
+    rating:          "rate one thing on a scale"
+    nps:             "likelihood to recommend, from 0 to 10"
+    multiple_choice: "pick from a list of options"
+    matrix:          "rate several items on the same scale"
+    open_text:       "answer in the respondent's own words"
+    yes_no:          "a yes or no answer"
+  state: ["question", "answer_options"]
+  model: auto
+  thresholds: {act: 0.85, suggest: 0.60}

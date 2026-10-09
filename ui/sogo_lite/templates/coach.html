@@ -1,0 +1,46 @@
+{% extends "project_base.html" %}
+{% block content %}
+{% if not on %}<p class="banner warn">The Survey Coach blind-spot module is off.</p>{% endif %}
+<p class="muted">Survey Coach, after launch: each comment is matched to the survey's own closed questions, or to "none of these". A large "none of these" share means respondents keep writing about something no question asks. The wording checks before launch appear as hints in the question editor.</p>
+
+<section class="card">
+  <h2>Check the comments</h2>
+  <form method="post" action="/design/{{ project.survey_no }}/coach" class="stack">
+    <label>Comments on <select name="qid">{% for q in comment_questions %}<option value="{{ q.qid }}">{{ q.qid }}: {{ q.wording }}</option>{% else %}<option value="">this project has no comment question</option>{% endfor %}</select></label>
+    <label>Likely topics, to name what the unmatched comments share (optional), one per line as <code>topic: description</code>
+      <textarea name="topics" rows="3" placeholder="parking: car park, spaces, ticket machine, barrier&#10;loyalty_app: rewards app, points, login"></textarea></label>
+    <div class="row"><button {{ 'disabled' if not on }}>Run the check</button></div>
+    <p class="muted">Compared with {{ closed|length }} closed question(s): {% for q in closed %}<code>{{ q.qid }}</code>{{ ', ' if not loop.last }}{% endfor %}. Up to {{ sample_size }} comments are checked, picked at random. The classifier can only say a comment fits no question; naming the topic needs the list above, at least two topics.</p>
+  </form>
+</section>
+
+{% if run %}
+{% set r = run.result %}
+<section class="card">
+  <h2>Last check <small>comments on <code>{{ run.qid }}</code> · {{ run.created_at }}</small></h2>
+  {% if run.suggest %}
+  <p class="hint"><strong>Blind spot.</strong> {{ r.none_share }}% of the checked comments fit none of the survey's questions.
+    {% for topic in run.suggested_topics %}<br><strong>{{ r.topics[topic].share }}% discuss {{ topic.replace('_', ' ') }}.</strong> No question asks about {{ topic.replace('_', ' ') }}. Add one?{% endfor %}
+    {% if not run.suggested_topics %}<br>Read the examples below, or run the check again with a list of likely topics.{% endif %}</p>
+  {% else %}<p>No blind spot: {{ r.none_share }}% of the checked comments fit no question, under the {{ '%g'|format(min_share) }}% threshold.</p>{% endif %}
+  <table>
+    <thead><tr><th>Comment is mainly about</th><th>Comments</th></tr></thead>
+    <tbody>
+      {% for qid, n in r.matched.items() %}<tr><td><code>{{ qid }}</code> {{ by_qid[qid].wording if by_qid.get(qid) else '(deleted)' }}</td><td>{{ n }}</td></tr>{% endfor %}
+      <tr><td><strong>None of these</strong></td><td><strong>{{ r.none }}</strong></td></tr>
+      <tr><td class="muted">Unsure</td><td class="muted">{{ r.unsure }}</td></tr>
+    </tbody>
+  </table>
+  <p class="muted">{{ r.checked }} of {{ r.total }} comment(s) checked.</p>
+  {% if r.topics %}
+  <h3>What the unmatched comments are about</h3>
+  <table><thead><tr><th>Topic</th><th>Comments</th><th>Share of all checked</th></tr></thead>
+    <tbody>{% for topic, t in r.topics.items() %}<tr><td>{{ topic }}</td><td>{{ t.count }}</td><td>{{ t.share }}%</td></tr>{% endfor %}</tbody></table>
+  {% endif %}
+  {% if r.examples %}
+  <h3>Comments that fit no question</h3>
+  <ul>{% for text in r.examples %}<li>{{ text }}</li>{% endfor %}</ul>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

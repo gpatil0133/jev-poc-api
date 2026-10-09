@@ -36,6 +36,38 @@
 </section>
 {% endif %}
 
+{% if virtual %}
+<section class="card">
+  <h2>Virtual Questions <small>answers nobody gave: read from the comment</small></h2>
+  <table>
+    <thead><tr><th>Question</th><th>Answer</th><th>Confidence</th><th>Band</th></tr></thead>
+    <tbody>{% for v in virtual %}
+      <tr><td>{{ v.vq.wording }} <span class="muted">from <code>{{ v.vq.source_qid }}</code></span></td>
+          <td>{{ v.effective }} <span class="pill band-suggest">inferred</span>{% if v.effective != v.answer.label %} <span class="muted">unsure: the classifier leaned to {{ v.answer.label }}</span>{% endif %}</td>
+          <td>{{ '%.2f'|format(v.answer.confidence or 0) }}</td><td><span class="pill band-{{ v.answer.band }}">{{ v.answer.band }}</span></td></tr>
+    {% endfor %}</tbody>
+  </table>
+</section>
+{% endif %}
+
+{% if inferred %}
+<section class="card">
+  <h2>Inferred answers <small>feature concepts: asked once per text answer, at submit</small></h2>
+  {% for c in inferred %}
+  <h3><code>{{ c.qid }}</code> <small>{{ c.updated_at }}</small></h3>
+  <table>
+    <thead><tr><th>Question</th><th>Label</th><th>Confidence</th><th>Band</th><th>Call</th></tr></thead>
+    <tbody>{% for id, a in c.answers.items() %}
+      <tr><td><code>{{ id }}</code></td><td>{{ a.label }}</td><td>{{ '%.2f'|format(a.confidence or 0) }}</td>
+          <td><span class="pill band-{{ a.band }}">{{ a.band }}</span></td>
+          <td>{% if a._log %}<a href="/inspector/{{ a._log }}">#{{ a._log }}</a>{% endif %}</td></tr>
+    {% endfor %}</tbody>
+  </table>
+  {% endfor %}
+  <p class="muted">Only band <code>act</code> is counted, routed or acted on. Anything else is kept for a person to see.</p>
+</section>
+{% endif %}
+
 {% if classifications %}
 <section class="card">
   <h2>Stored classifications <small>classified once; every rule reads this</small></h2>

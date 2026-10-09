@@ -36,6 +36,20 @@
   <form method="post" action="/design/{{ project.survey_no }}/q/{{ question.id }}/delete" data-confirm="Delete this question and the rules that use it?"><button class="link danger">Delete question</button></form>
 </section>
 
+{% if question.type == 'text' and module_on('free_text_category') %}
+<section class="card" id="categories">
+  <h2>Category list <small>free text to category: for a short typed answer such as a job title or industry</small></h2>
+  <form method="post" action="/design/{{ project.survey_no }}/q/{{ question.id }}/categories" class="stack">
+    <label>Question the classifier is asked (optional) <input name="instructions" maxlength="400" value="{{ categories.instructions or '' if categories }}" placeholder="Which seniority level does this job title belong to?"></label>
+    <label>Categories, one per line as <code>category: one-line description</code>
+      <textarea name="lines" rows="5" placeholder="senior_management: senior manager or head of a function">{% if categories %}{% for k, v in categories.classes.items() %}{{ k }}{% if v %}: {{ v }}{% endif %}
+{% endfor %}{% endif %}</textarea></label>
+    <div class="row"><button>Save category list</button></div>
+    <p class="muted">Each typed answer is matched to one category when the response is submitted, and stored next to it. "Can't tell" is always an option and never counts. Clear the list to remove it. A question with a category list is treated as a typed value, not a comment.</p>
+  </form>
+</section>
+{% endif %}
+
 {% if classes_on %}
 <section class="card" id="classes">
   <h2>Classes <small>scope 1: defined once, read by Logic and by Rules &amp; Alerts</small></h2>

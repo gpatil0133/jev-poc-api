@@ -34,6 +34,28 @@ MODULES: list[dict[str, str]] = [
      "where": "Design → question editor"},
     {"id": "pii_answer", "n": "10", "name": "Personal data in text answers",
      "where": "Responses → individual response"},
+    # The feature concepts (docs/JEV-Feature-concepts.html). Callback offer has no
+    # switch of its own: it is a ready-made meaning in the scope 3 rule editor.
+    {"id": "survey_coach", "n": "F1", "name": "Survey Coach: question wording",
+     "where": "Design → question editor"},
+    {"id": "qtype_pick", "n": "F2", "name": "Question type pick",
+     "where": "Design → question editor"},
+    {"id": "free_text_category", "n": "F3", "name": "Free text to category",
+     "where": "Design → Text Box editor, Responses"},
+    {"id": "identity_warning", "n": "F4", "name": "\"This might identify you\" warning",
+     "where": "Live survey page, Anonymous projects"},
+    {"id": "virtual_questions", "n": "F5", "name": "Virtual Questions",
+     "where": "Design → Virtual Questions, Responses"},
+    {"id": "coach_blind_spot", "n": "F6", "name": "Survey Coach: what no question asks",
+     "where": "Design → Coach"},
+    {"id": "feedback_owners", "n": "F7", "name": "Feedback Owners",
+     "where": "Owners"},
+    {"id": "fix_tracker", "n": "F8", "name": "Fix Tracker",
+     "where": "Fix Tracker"},
+    {"id": "invite_hold", "n": "F9", "name": "Invitation hold",
+     "where": "Distribute"},
+    {"id": "invite_replies", "n": "F10", "name": "Invitation replies",
+     "where": "Distribute"},
 ]
 MODULE_IDS = [m["id"] for m in MODULES]
 MODULE_NAMES = {m["id"]: m["name"] for m in MODULES}
@@ -73,5 +95,7 @@ def override(forced: dict[str, bool]) -> Iterator[None]:
 def load() -> None:
     """Import every module so it can subscribe to events."""
     for name in ("shared_classes", "alert_meaning", "logic_text", "design_hints",
-                 "tag_suggest", "template_pick", "quiz_scoring", "pii"):
+                 "tag_suggest", "template_pick", "quiz_scoring", "pii",
+                 "inferred", "free_text", "virtual_questions", "owners", "fix_tracker",
+                 "survey_coach", "identity", "distribution"):
         importlib.import_module(f"sogo_lite.modules.{name}")
